@@ -9,7 +9,7 @@
  * di tahap ini supaya tidak mengganggu development / API calls).
  */
 
-const CACHE_NAME = "it-platform-shell-v1";
+const CACHE_NAME = "it-platform-shell-v2";
 
 // Hanya file app-shell dasar. Belum ada halaman modul (login, cctv, dll)
 // karena belum dibuat pada Phase 1.
@@ -23,7 +23,8 @@ const APP_SHELL_FILES = [
   "./js/router.js",
   "./js/api.js",
   "./js/auth.js",
-  "./js/ui.js"
+  "./js/ui.js",
+  "./js/pages/login.js"
 ];
 
 self.addEventListener("install", (event) => {
