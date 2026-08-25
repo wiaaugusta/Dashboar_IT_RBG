@@ -2,16 +2,18 @@
  * APP.JS - ENTRY POINT
  * -----------------------
  * Satu-satunya file yang di-load langsung oleh index.html.
- * Tanggung jawab: bootstrap foundation (service worker, router).
+ * Tanggung jawab: bootstrap foundation (service worker, router, route awal).
  *
- * PHASE 1 STATUS:
- * Belum ada halaman (Login / Application Shell / CCTV) yang didaftarkan
- * ke router, karena scope Phase 1 hanya "Foundation". File ini akan
- * diperluas pada tahap LOGIN untuk melakukan redirect ke halaman yang
- * sesuai berdasarkan status session (lihat auth.js).
+ * PHASE 2 STATUS:
+ * Route "/login" sudah didaftarkan dan menjadi tujuan default.
+ * Route "/dashboard" / Application Shell BELUM ada - akan ditambahkan
+ * pada tahap Application Shell. Pengecekan session (redirect otomatis
+ * jika sudah login) akan ditambahkan saat auth.js punya fungsi login()
+ * yang nyata di Phase 3.
  */
 
-import { init as initRouter } from "./router.js";
+import { init as initRouter, registerRoute, navigate } from "./router.js";
+import { renderLoginPage } from "./pages/login.js";
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -25,15 +27,23 @@ function registerServiceWorker() {
   });
 }
 
+function registerRoutes() {
+  registerRoute("/login", renderLoginPage);
+
+  // RESERVED - didaftarkan pada tahap Application Shell:
+  //   registerRoute("/dashboard", renderDashboardShell);
+}
+
 function bootstrap() {
   registerServiceWorker();
+  registerRoutes();
   initRouter();
 
-  // Placeholder status foundation. Akan digantikan oleh render halaman
-  // Login/Application Shell pada tahap berikutnya.
-  const bootText = document.querySelector(".boot-screen__text");
-  if (bootText) {
-    bootText.textContent = "Foundation siap. Menunggu implementasi Login.";
+  // Untuk saat ini selalu arahkan ke /login jika belum ada hash di URL.
+  // Nanti (Phase 3/Application Shell) ini akan memeriksa isAuthenticated()
+  // dari auth.js dan mengarahkan ke /dashboard jika sudah punya session.
+  if (!window.location.hash) {
+    navigate("/login");
   }
 }
 
