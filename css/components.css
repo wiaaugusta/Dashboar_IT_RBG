@@ -1,0 +1,110 @@
+/**
+ * COMPONENTS.CSS - REUSABLE COMPONENT LIBRARY
+ * ----------------------------------------------
+ * Prinsip: docs/UI_AND_DESIGN.md #56 - komponen dengan fungsi sama
+ * harus dipakai ulang, jangan dibuat versi per-modul.
+ *
+ * Phase 1 hanya berisi komponen yang benar-benar lintas-halaman
+ * dan dipakai sejak boot (Button, Toast). Input, Card, Table, Modal,
+ * Drawer, Badge, Skeleton, dst akan ditambahkan saat halaman yang
+ * membutuhkannya dibuat (Login / Application Shell / CCTV).
+ */
+
+/* ---------- BUTTON ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 42px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-background-offwhite);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-background-offwhite);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: var(--color-text-on-primary);
+}
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* ---------- TOAST ---------- */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toast {
+  min-width: 240px;
+  max-width: 360px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-text);
+  color: var(--color-text-on-primary);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--font-size-small);
+  animation: toast-in 0.15s ease-out;
+}
+
+.toast-success { background-color: var(--color-success); }
+.toast-danger { background-color: var(--color-danger); }
+.toast-info { background-color: var(--color-info); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .toast-container {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: var(--space-4);
+  }
+  .toast {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
