@@ -1,80 +1,50 @@
 /**
- * API.JS - SHARED API CLIENT
- * -----------------------------
- * Satu-satunya tempat frontend melakukan komunikasi dengan backend
- * (Google Apps Script). Modul lain (auth.js, modules/cctv.js, dst)
- * WAJIB memakai fungsi di file ini, bukan membuat fetch sendiri.
- * Sumber prinsip: docs/DATA_AND_API.md #31, docs/ARCHITECTURE.md #27.
+ * APP.JS - ENTRY POINT
+ * -----------------------
+ * Satu-satunya file yang di-load langsung oleh index.html.
+ * Tanggung jawab: bootstrap foundation (service worker, router, route awal).
  *
- * PHASE 1 STATUS:
- * URL Apps Script belum di-deploy -> APPS_SCRIPT_URL masih placeholder.
- * Fungsi request() sudah siap dipakai saat Authentication / CCTV API
- * dikerjakan pada phase berikutnya. Tidak ada action nyata yang
- * dipanggil pada phase ini.
+ * PHASE 2 STATUS:
+ * Route "/login" sudah didaftarkan dan menjadi tujuan default.
+ * Route "/dashboard" / Application Shell BELUM ada - akan ditambahkan
+ * pada tahap Application Shell. Pengecekan session (redirect otomatis
+ * jika sudah login) akan ditambahkan saat auth.js punya fungsi login()
+ * yang nyata di Phase 3.
  */
 
-// TODO (Phase Authentication/CCTV): ganti dengan URL deployment Apps Script.
-// JANGAN pernah menaruh credential/API key di sini - hanya URL endpoint publik.
-const APPS_SCRIPT_URL = "REPLACE_WITH_APPS_SCRIPT_DEPLOYMENT_URL";
+import { init as initRouter, registerRoute, navigate } from "./router.js";
+import { renderLoginPage } from "./pages/login.js";
 
-/**
- * Kirim request ke backend Apps Script.
- * Mengikuti kontrak request/response di docs/DATA_AND_API.md #25-#27:
- *   request : { action, ...payload }
- *   response: { success, message, data }
- *
- * @param {string} action - nama action backend, contoh: "login", "getCCTV"
- * @param {object} payload - data tambahan yang dikirim bersama action
- * @param {object} [options]
- * @param {string} [options.sessionToken] - token session jika user sudah login
- * @returns {Promise<{success: boolean, message: string, data: any}>}
- */
-export async function apiRequest(action, payload = {}, options = {}) {
-  if (!action) {
-    throw new Error("apiRequest: 'action' wajib diisi.");
-  }
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
 
-  const body = {
-    action,
-    ...payload
-  };
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .catch((error) => {
+        console.error("[app.js] Service worker registration gagal:", error);
+      });
+  });
+}
 
-  if (options.sessionToken) {
-    body.sessionToken = options.sessionToken;
-  }
+function registerRoutes() {
+  registerRoute("/login", renderLoginPage);
 
-  try {
-    const response = await fetch(https://script.google.com/macros/s/AKfycbyld_jhumhTe3FY2Yta9csQDIsAYe5l_el0BO917FF7USX1Ssj_QQHFSG1gGejHuoRt/exec, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8" // Apps Script web app menghindari CORS preflight
-      },
-      body: JSON.stringify(body)
-    });
+  // RESERVED - didaftarkan pada tahap Application Shell:
+  //   registerRoute("/dashboard", renderDashboardShell);
+}
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: "Gagal menghubungi server. Silakan coba kembali.",
-        data: null
-      };
-    }
+function bootstrap() {
+  registerServiceWorker();
+  registerRoutes();
+  initRouter();
 
-    const json = await response.json();
-
-    // Jaga-jaga apabila backend tidak mengikuti kontrak response.
-    return {
-      success: Boolean(json.success),
-      message: json.message || "",
-      data: json.data ?? null
-    };
-  } catch (error) {
-    // Jangan bocorkan detail teknis ke UI (docs/PROJECT_CONSTITUTION.md #21).
-    console.error("[api.js] Request gagal:", error);
-    return {
-      success: false,
-      message: "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
-      data: null
-    };
+  // Untuk saat ini selalu arahkan ke /login jika belum ada hash di URL.
+  // Nanti (Phase 3/Application Shell) ini akan memeriksa isAuthenticated()
+  // dari auth.js dan mengarahkan ke /dashboard jika sudah punya session.
+  if (!window.location.hash) {
+    navigate("/login");
   }
 }
+
+document.addEventListener("DOMContentLoaded", bootstrap);
