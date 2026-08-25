@@ -1,0 +1,57 @@
+/**
+ * LAYOUT.CSS - APPLICATION LAYOUT
+ * ---------------------------------
+ * Phase 1: hanya root container + boot screen.
+ * Sidebar / Header / Content grid untuk Application Shell akan
+ * ditambahkan pada tahap "APPLICATION SHELL" (belum dikerjakan).
+ * Login page layout akan ditambahkan pada tahap "LOGIN".
+ */
+
+html, body {
+  height: 100%;
+}
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- BOOT SCREEN ---------- */
+/* Ditampilkan sebelum router menentukan halaman (login / shell) */
+.boot-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background-color: var(--color-background);
+}
+
+.boot-screen__mark {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-h3);
+  box-shadow: var(--shadow-md);
+}
+
+.boot-screen__text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+/*
+  ================================================================
+  RESERVED FOR NEXT PHASE (APPLICATION SHELL) - JANGAN diisi dulu:
+  .app-shell, .app-sidebar, .app-header, .app-content,
+  .app-drawer, .app-drawer-overlay
+  ================================================================
+*/
