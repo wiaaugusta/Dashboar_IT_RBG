@@ -48,6 +48,110 @@ html, body {
   font-size: var(--font-size-small);
 }
 
+/* ---------- LOGIN PAGE (Phase 2) ---------- */
+/* Desktop: split screen (docs/UI_AND_DESIGN.md #43) */
+.login-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+}
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.login-panel--brand {
+  background: linear-gradient(160deg, var(--color-primary) 0%, #0F2557 100%);
+  color: var(--color-text-on-primary);
+}
+
+.login-brand {
+  max-width: 380px;
+  text-align: left;
+}
+
+.login-brand__mark {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background-color: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+}
+
+.login-brand__title {
+  font-size: var(--font-size-h1);
+  color: var(--color-text-on-primary);
+  margin-bottom: var(--space-3);
+}
+
+.login-brand__tagline {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--font-size-body);
+}
+
+.login-panel--form {
+  background-color: var(--color-background);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+.login-card__mark--mobile {
+  display: none;
+}
+
+.login-card__title {
+  margin-bottom: var(--space-2);
+}
+
+.login-card__subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  margin-bottom: var(--space-6);
+}
+
+.login-submit-btn {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+/* Mobile: satu kolom, illustration disembunyikan (docs/UI_AND_DESIGN.md #44) */
+@media (max-width: 768px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .login-panel--brand {
+    display: none;
+  }
+
+  .login-panel--form {
+    padding: var(--space-6) var(--space-5);
+  }
+
+  .login-card__mark--mobile {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: var(--space-5);
+  }
+}
+
 /*
   ================================================================
   RESERVED FOR NEXT PHASE (APPLICATION SHELL) - JANGAN diisi dulu:
