@@ -4,16 +4,17 @@
  * Satu-satunya file yang di-load langsung oleh index.html.
  * Tanggung jawab: bootstrap foundation (service worker, router, route awal).
  *
- * PHASE 2 STATUS:
- * Route "/login" sudah didaftarkan dan menjadi tujuan default.
- * Route "/dashboard" / Application Shell BELUM ada - akan ditambahkan
- * pada tahap Application Shell. Pengecekan session (redirect otomatis
- * jika sudah login) akan ditambahkan saat auth.js punya fungsi login()
- * yang nyata di Phase 3.
+ * PHASE 4 STATUS:
+ * Sekarang mengecek session (isAuthenticated) saat aplikasi dibuka:
+ * - Sudah login -> arahkan ke "/session-check" (halaman sementara)
+ * - Belum login -> arahkan ke "/login"
+ * "/session-check" akan digantikan Application Shell asli di Phase 5.
  */
 
 import { init as initRouter, registerRoute, navigate } from "./router.js";
 import { renderLoginPage } from "./pages/login.js";
+import { renderSessionCheckPage } from "./pages/session-check.js";
+import { isAuthenticated } from "./auth.js";
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -29,6 +30,7 @@ function registerServiceWorker() {
 
 function registerRoutes() {
   registerRoute("/login", renderLoginPage);
+  registerRoute("/session-check", renderSessionCheckPage);
 
   // RESERVED - didaftarkan pada tahap Application Shell:
   //   registerRoute("/dashboard", renderDashboardShell);
@@ -39,11 +41,8 @@ function bootstrap() {
   registerRoutes();
   initRouter();
 
-  // Untuk saat ini selalu arahkan ke /login jika belum ada hash di URL.
-  // Nanti (Phase 3/Application Shell) ini akan memeriksa isAuthenticated()
-  // dari auth.js dan mengarahkan ke /dashboard jika sudah punya session.
   if (!window.location.hash) {
-    navigate("/login");
+    navigate(isAuthenticated() ? "/session-check" : "/login");
   }
 }
 
