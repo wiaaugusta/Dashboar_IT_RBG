@@ -9,10 +9,8 @@
  * di tahap ini supaya tidak mengganggu development / API calls).
  */
 
-const CACHE_NAME = "it-platform-shell-v3";
+const CACHE_NAME = "it-platform-shell-v4";
 
-// Hanya file app-shell dasar. Belum ada halaman modul (login, cctv, dll)
-// karena belum dibuat pada Phase 1.
 const APP_SHELL_FILES = [
   "./index.html",
   "./manifest.json",
@@ -30,8 +28,11 @@ const APP_SHELL_FILES = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL_FILES))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(APP_SHELL_FILES);
+    })
   );
+
   self.skipWaiting();
 });
 
@@ -45,19 +46,36 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
+
   self.clients.claim();
 });
 
-// Cache-first HANYA untuk file app-shell statis di atas.
-// Request lain (API Apps Script, dsb) dibiarkan lewat langsung ke network.
 self.addEventListener("fetch", (event) => {
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
   const isAppShellRequest = APP_SHELL_FILES.some((file) =>
-    event.request.url.endsWith(file.replace("./", "/"))
+    request.url.endsWith(file.replace("./", "/"))
   );
 
   if (!isAppShellRequest) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok) {
+          const responseClone = response.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request);
+      })
   );
 });
