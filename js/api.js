@@ -44,7 +44,7 @@ export async function apiRequest(action, payload = {}, options = {}) {
   }
 
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    const response = await fetch(103Wt3uJGPPDIdLAzBPsk4PF0gRlaU24fIJJ5acelfQDjdlrgljEMePJU, {
       method: "POST",
       headers: {
         "Content-Type": "text/plain;charset=utf-8" // Apps Script web app menghindari CORS preflight
