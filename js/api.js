@@ -1,50 +1,35 @@
 /**
- * APP.JS - ENTRY POINT
- * -----------------------
- * Satu-satunya file yang di-load langsung oleh index.html.
- * Tanggung jawab: bootstrap foundation (service worker, router, route awal).
+ * API.GS - ACTION ROUTER
+ * ---------------------------
+ * Menentukan handler mana yang menangani sebuah "action" dari request.
+ * Modul (Auth.gs, Modules/CCTV.gs, dst) mendaftarkan action-nya di sini.
  *
- * PHASE 2 STATUS:
- * Route "/login" sudah didaftarkan dan menjadi tujuan default.
- * Route "/dashboard" / Application Shell BELUM ada - akan ditambahkan
- * pada tahap Application Shell. Pengecekan session (redirect otomatis
- * jika sudah login) akan ditambahkan saat auth.js punya fungsi login()
- * yang nyata di Phase 3.
+ * PHASE 1 STATUS:
+ * Belum ada action yang didaftarkan (login, getCCTV, dll belum dibuat).
+ * Setiap action yang masuk akan mendapat response "Action tidak dikenal"
+ * sampai action tersebut diimplementasikan pada tahap Authentication/CCTV.
+ *
+ * @param {string} action
+ * @param {object} requestBody - seluruh body request (termasuk action)
+ * @returns {GoogleAppsScript.Content.TextOutput}
  */
+function routeAction(action, requestBody) {
+  switch (action) {
+    case "login":
+      return handleLogin(requestBody);
 
-import { init as initRouter, registerRoute, navigate } from "./router.js";
-import { renderLoginPage } from "./pages/login.js";
+    case "logout":
+      return handleLogout(requestBody);
 
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
+    // RESERVED - akan diaktifkan pada tahap CCTV:
+    //   case "getCCTV":
+    //     return handleGetCctv(requestBody);
+    //   case "getCCTVDetail":
+    //     return handleGetCctvDetail(requestBody);
+    //   case "updateCCTV":
+    //     return handleUpdateCctv(requestBody);
 
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("./service-worker.js")
-      .catch((error) => {
-        console.error("[app.js] Service worker registration gagal:", error);
-      });
-  });
-}
-
-function registerRoutes() {
-  registerRoute("/login", renderLoginPage);
-
-  // RESERVED - didaftarkan pada tahap Application Shell:
-  //   registerRoute("/dashboard", renderDashboardShell);
-}
-
-function bootstrap() {
-  registerServiceWorker();
-  registerRoutes();
-  initRouter();
-
-  // Untuk saat ini selalu arahkan ke /login jika belum ada hash di URL.
-  // Nanti (Phase 3/Application Shell) ini akan memeriksa isAuthenticated()
-  // dari auth.js dan mengarahkan ke /dashboard jika sudah punya session.
-  if (!window.location.hash) {
-    navigate("/login");
+    default:
+      return buildResponse(false, "Action tidak dikenal: " + action, null);
   }
 }
-
-document.addEventListener("DOMContentLoaded", bootstrap);
