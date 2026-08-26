@@ -1,9 +1,8 @@
 /**
- * AUTH.JS - SESSION FOUNDATION
+ * AUTH.JS - SESSION & LOGIN
  * -------------------------------
- * Phase 1 HANYA menyediakan helper session di sisi frontend.
- * Fungsi login() yang benar-benar memanggil backend BELUM dibuat -
- * itu bagian dari tahap "LOGIN" (belum dikerjakan, menunggu Phase 1 selesai).
+ * Menyimpan session di sisi frontend, dan menyediakan login()/logout()
+ * yang benar-benar memanggil backend (Phase 4).
  *
  * Aturan keamanan (docs/PROJECT_CONSTITUTION.md #8, #17):
  * - TIDAK PERNAH menyimpan password di sini.
@@ -12,13 +11,14 @@
  *   diterbitkan backend setelah login berhasil.
  */
 
+import { apiRequest } from "./api.js";
+
 const SESSION_KEY = "it_platform_session";
 
 /**
  * @typedef {object} SessionData
  * @property {string} nik
- * @property {string} name
- * @property {"ADMIN"|"IT_STORE"} role
+ * @property {"ADMIN"|"IT_STORE"|"IT_OFFICE"} role
  * @property {string} sessionToken
  * @property {number} loginAt
  */
@@ -47,16 +47,49 @@ export function isAuthenticated() {
   return getSession() !== null;
 }
 
-/** @returns {"ADMIN"|"IT_STORE"|null} */
+/** @returns {"ADMIN"|"IT_STORE"|"IT_OFFICE"|null} */
 export function getRole() {
   const session = getSession();
   return session ? session.role : null;
 }
 
-/*
- * RESERVED - akan diimplementasikan pada tahap LOGIN:
- *   export async function login(nik, password) { ... }
- *   export async function logout() { ... }
- * Belum dibuat sekarang supaya tidak ada logic authentication
- * yang setengah jadi di foundation.
+/**
+ * Login ke backend. Menyimpan session otomatis jika berhasil.
+ * @param {string} nik
+ * @param {string} password
+ * @returns {Promise<{success: boolean, message: string}>}
  */
+export async function login(nik, password) {
+  const result = await apiRequest("login", { nik, password });
+
+  if (result.success && result.data) {
+    setSession({
+      nik: result.data.nik,
+      role: result.data.role,
+      sessionToken: result.data.sessionToken,
+      loginAt: Date.now()
+    });
+  }
+
+  return { success: result.success, message: result.message };
+}
+
+/**
+ * Logout: beri tahu backend (supaya sessionToken dihapus dari cache
+ * server) lalu hapus session di frontend. Session frontend tetap
+ * dihapus walau request ke backend gagal (mis. tidak ada koneksi).
+ */
+export async function logout() {
+  const session = getSession();
+
+  if (session) {
+    try {
+      await apiRequest("logout", { sessionToken: session.sessionToken });
+    } catch (error) {
+      console.error("[auth.js] Logout ke backend gagal:", error);
+    }
+  }
+
+  clearSession();
+}
+
