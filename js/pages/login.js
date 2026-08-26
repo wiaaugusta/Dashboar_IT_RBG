@@ -4,15 +4,15 @@
  * Menampilkan halaman Login (split-screen desktop, single column mobile)
  * sesuai docs/UI_AND_DESIGN.md #43-45.
  *
- * PHASE 2 STATUS:
- * Hanya UI + validasi frontend (required, format dasar). Submit BELUM
- * memanggil backend - itu akan dikerjakan di Phase 3 (Authentication
- * Backend) dengan memanggil login() di auth.js yang saat ini masih
- * placeholder. Untuk sekarang, submit hanya menampilkan info ke user
- * supaya UI dapat diuji end-to-end tanpa backend siap.
+ * PHASE 4 STATUS:
+ * Submit sekarang benar-benar memanggil backend lewat login() (auth.js).
+ * Setelah berhasil, diarahkan ke halaman sementara "/session-check"
+ * (bukan Dashboard sungguhan - itu baru dibuat di Phase 5 Application Shell).
  */
 
-import { showError, showToast } from "../ui.js";
+import { showError, showSuccess } from "../ui.js";
+import { login } from "../auth.js";
+import { navigate } from "../router.js";
 
 export function renderLoginPage(container) {
   container.innerHTML = `
@@ -111,25 +111,26 @@ function bindLoginForm(container) {
     const isValid = validateLoginForm(container, nik, password);
     if (!isValid) return;
 
-    // RESERVED - Phase 3 (Authentication Backend):
-    //   submitBtn.disabled = true;
-    //   submitBtn.textContent = "Memproses...";
-    //   const result = await login(nik, password); // dari auth.js
-    //   if (result.success) { navigate("/dashboard"); }
-    //   else { showError(result.message); }
-    //
-    // Untuk Phase 2, backend belum ada - beri info yang jujur ke user
-    // supaya tidak terlihat seperti aplikasi "diam saja".
-    showToast(
-      "UI Login siap. Proses autentikasi ke backend akan diaktifkan pada tahap berikutnya.",
-      "info"
-    );
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memproses...";
+
+    const result = await login(nik, password);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Login";
+
+    if (result.success) {
+      showSuccess(result.message || "Login berhasil.");
+      navigate("/session-check");
+    } else {
+      showError(result.message || "Login gagal.");
+    }
   });
 }
 
 /**
  * Validasi ringan di frontend (feedback cepat untuk user).
- * Validasi WAJIB tetap dilakukan ulang di backend saat Phase 3
+ * Validasi WAJIB tetap dilakukan ulang di backend
  * (docs/PROJECT_CONSTITUTION.md #25 - frontend validation bukan security).
  */
 function validateLoginForm(container, nik, password) {
@@ -158,3 +159,4 @@ function validateLoginForm(container, nik, password) {
 
   return isValid;
 }
+
