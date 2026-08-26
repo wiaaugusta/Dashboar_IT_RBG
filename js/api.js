@@ -15,7 +15,7 @@
 
 // TODO (Phase Authentication/CCTV): ganti dengan URL deployment Apps Script.
 // JANGAN pernah menaruh credential/API key di sini - hanya URL endpoint publik.
-const APPS_SCRIPT_URL = "103Wt3uJGPPDIdLAzBPsk4PF0gRlaU24fIJJ5acelfQDjdlrgljEMePJU";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyld_jhumhTe3FY2Yta9csQDIsAYe5l_el0BO917FF7USX1Ssj_QQHFSG1gGejHuoRt/exec";
 
 /**
  * Kirim request ke backend Apps Script.
