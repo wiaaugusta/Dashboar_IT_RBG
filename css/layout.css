@@ -152,6 +152,48 @@ html, body {
   }
 }
 
+/* ---------- SESSION CHECK (Phase 4 - SEMENTARA) ---------- */
+/* Dihapus/diganti saat Application Shell (Phase 5) selesai dibuat. */
+.session-check {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.session-check__card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+  max-width: 420px;
+  width: 100%;
+}
+
+.session-check__note {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  margin: var(--space-3) 0 var(--space-6);
+}
+
+.session-check__info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.session-check__info dt {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.session-check__info dd {
+  font-weight: 600;
+}
+
 /*
   ================================================================
   RESERVED FOR NEXT PHASE (APPLICATION SHELL) - JANGAN diisi dulu:
