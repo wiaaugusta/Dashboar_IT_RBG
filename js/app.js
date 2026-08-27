@@ -16,6 +16,7 @@ import { init as initRouter, registerRoute, navigate } from "./router.js";
 import { renderLoginPage } from "./pages/login.js";
 import { renderDashboardPage } from "./pages/dashboard.js";
 import { renderComingSoonPage } from "./pages/coming-soon.js";
+import { renderCctvPage } from "./modules/cctv.js";
 import { isAuthenticated } from "./auth.js";
 import { getFlatRoutes } from "./nav-config.js";
 
@@ -50,13 +51,13 @@ function withAuth(renderFn) {
 function registerRoutes() {
   registerRoute("/login", renderLoginPage);
   registerRoute("/dashboard", withAuth(renderDashboardPage));
+  registerRoute("/cctv", withAuth(renderCctvPage));
 
-  // Semua menu selain Dashboard didaftarkan otomatis dari nav-config.js,
-  // memakai halaman placeholder generik sampai modulnya benar-benar
-  // dibangun (mis. CCTV di Phase 6/7 - saat itu, baris "cctv" di bawah
-  // tinggal diganti ke renderCctvPage tanpa menyentuh file lain).
+  // Semua menu selain Dashboard & CCTV didaftarkan otomatis dari
+  // nav-config.js, memakai halaman placeholder generik sampai modulnya
+  // benar-benar dibangun.
   getFlatRoutes().forEach((route) => {
-    if (route.key === "dashboard") return; // sudah didaftarkan di atas
+    if (route.key === "dashboard" || route.key === "cctv") return; // sudah didaftarkan di atas
     registerRoute(
       route.path,
       withAuth((container) => renderComingSoonPage(container, route))
@@ -75,4 +76,3 @@ function bootstrap() {
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
-

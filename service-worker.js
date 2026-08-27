@@ -9,7 +9,7 @@
  * di tahap ini supaya tidak mengganggu development / API calls).
  */
 
-const CACHE_NAME = "it-platform-shell-v4";
+const CACHE_NAME = "it-platform-shell-v5";
 
 // Hanya file app-shell dasar. Belum ada halaman modul (login, cctv, dll)
 // karena belum dibuat pada Phase 1.
@@ -28,7 +28,8 @@ const APP_SHELL_FILES = [
   "./js/shell.js",
   "./js/pages/login.js",
   "./js/pages/dashboard.js",
-  "./js/pages/coming-soon.js"
+  "./js/pages/coming-soon.js",
+  "./js/modules/cctv.js"
 ];
 
 self.addEventListener("install", (event) => {

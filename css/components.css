@@ -138,7 +138,165 @@
   color: var(--color-danger);
 }
 
-/* ---------- TOAST ---------- */
+/* ---------- BADGE ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+}
+
+.badge-success { background-color: var(--color-success-soft); color: var(--color-success); }
+.badge-warning { background-color: var(--color-warning-soft); color: var(--color-warning); }
+.badge-danger { background-color: var(--color-danger-soft); color: var(--color-danger); }
+.badge-info { background-color: var(--color-info-soft); color: var(--color-info); }
+
+/* ---------- TABLE ---------- */
+/* Reusable - dipakai CCTV, nanti modul lain (docs/UI_AND_DESIGN.md #20) */
+.table-wrapper,
+.cctv-table-wrapper {
+  overflow-x: auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.cctv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-small);
+}
+
+.cctv-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: var(--font-size-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.cctv-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.cctv-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cctv-table tbody tr:hover {
+  background-color: var(--color-background-offwhite);
+}
+
+.cctv-table__muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-caption);
+}
+
+/* ---------- CCTV TOOLBAR ---------- */
+.cctv-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.cctv-search-input {
+  max-width: 320px;
+}
+
+.cctv-credential-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 560px) {
+  .cctv-credential-pair {
+    grid-template-columns: 1fr;
+  }
+  .cctv-toolbar {
+    flex-direction: column;
+  }
+  .cctv-search-input {
+    max-width: none;
+  }
+}
+
+/* ---------- MODAL ---------- */
+/* Reusable - komponen pertama dipakai CCTV, layak dipromosikan jadi
+   shared component kalau modul lain butuh (docs/UI_AND_DESIGN.md #28). */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.45);
+  z-index: 1100;
+}
+
+.modal-overlay.is-visible {
+  display: block;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - var(--space-8)));
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 1101;
+}
+
+.modal.is-visible {
+  display: block;
+}
+
+.modal__header {
+  padding: var(--space-5) var(--space-6) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal__subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.modal__body {
+  padding: var(--space-6);
+}
+
+.modal__section-title {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 560px) {
+  .modal {
+    width: calc(100vw - var(--space-6));
+  }
+}
 .toast-container {
   position: fixed;
   bottom: var(--space-6);
