@@ -4,17 +4,20 @@
  * Satu-satunya file yang di-load langsung oleh index.html.
  * Tanggung jawab: bootstrap foundation (service worker, router, route awal).
  *
- * PHASE 4 STATUS:
- * Sekarang mengecek session (isAuthenticated) saat aplikasi dibuka:
- * - Sudah login -> arahkan ke "/session-check" (halaman sementara)
- * - Belum login -> arahkan ke "/login"
- * "/session-check" akan digantikan Application Shell asli di Phase 5.
+ * PHASE 5 STATUS:
+ * Semua route setelah login (Dashboard + seluruh menu di nav-config.js)
+ * didaftarkan di sini, dibungkus withAuth() supaya otomatis redirect ke
+ * /login kalau belum ada session. Menu yang belum punya modul nyata
+ * memakai renderComingSoonPage() (satu fungsi generik, lihat
+ * pages/coming-soon.js).
  */
 
 import { init as initRouter, registerRoute, navigate } from "./router.js";
 import { renderLoginPage } from "./pages/login.js";
-import { renderSessionCheckPage } from "./pages/session-check.js";
+import { renderDashboardPage } from "./pages/dashboard.js";
+import { renderComingSoonPage } from "./pages/coming-soon.js";
 import { isAuthenticated } from "./auth.js";
+import { getFlatRoutes } from "./nav-config.js";
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -28,12 +31,37 @@ function registerServiceWorker() {
   });
 }
 
+/**
+ * Bungkus render function halaman dengan pengecekan session.
+ * Dipakai untuk SEMUA halaman setelah login (docs/PROJECT_CONSTITUTION.md
+ * #7 - backend tetap jadi pengaman utama, tapi frontend juga perlu
+ * mengarahkan user yang belum login supaya tidak melihat shell kosong).
+ */
+function withAuth(renderFn) {
+  return (container) => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+    renderFn(container);
+  };
+}
+
 function registerRoutes() {
   registerRoute("/login", renderLoginPage);
-  registerRoute("/session-check", renderSessionCheckPage);
+  registerRoute("/dashboard", withAuth(renderDashboardPage));
 
-  // RESERVED - didaftarkan pada tahap Application Shell:
-  //   registerRoute("/dashboard", renderDashboardShell);
+  // Semua menu selain Dashboard didaftarkan otomatis dari nav-config.js,
+  // memakai halaman placeholder generik sampai modulnya benar-benar
+  // dibangun (mis. CCTV di Phase 6/7 - saat itu, baris "cctv" di bawah
+  // tinggal diganti ke renderCctvPage tanpa menyentuh file lain).
+  getFlatRoutes().forEach((route) => {
+    if (route.key === "dashboard") return; // sudah didaftarkan di atas
+    registerRoute(
+      route.path,
+      withAuth((container) => renderComingSoonPage(container, route))
+    );
+  });
 }
 
 function bootstrap() {
@@ -42,8 +70,9 @@ function bootstrap() {
   initRouter();
 
   if (!window.location.hash) {
-    navigate(isAuthenticated() ? "/session-check" : "/login");
+    navigate(isAuthenticated() ? "/dashboard" : "/login");
   }
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
+
