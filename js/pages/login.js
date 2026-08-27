@@ -4,17 +4,22 @@
  * Menampilkan halaman Login (split-screen desktop, single column mobile)
  * sesuai docs/UI_AND_DESIGN.md #43-45.
  *
- * PHASE 4 STATUS:
- * Submit sekarang benar-benar memanggil backend lewat login() (auth.js).
- * Setelah berhasil, diarahkan ke halaman sementara "/session-check"
- * (bukan Dashboard sungguhan - itu baru dibuat di Phase 5 Application Shell).
+ * PHASE 5 STATUS:
+ * Setelah berhasil, diarahkan ke "/dashboard" (Application Shell asli).
+ * Kalau user yang sudah login membuka /login lagi, langsung dialihkan
+ * ke /dashboard (tidak perlu login ulang).
  */
 
 import { showError, showSuccess } from "../ui.js";
-import { login } from "../auth.js";
+import { login, isAuthenticated } from "../auth.js";
 import { navigate } from "../router.js";
 
 export function renderLoginPage(container) {
+  if (isAuthenticated()) {
+    navigate("/dashboard");
+    return;
+  }
+
   container.innerHTML = `
     <div class="login-layout">
       <section class="login-panel login-panel--brand" aria-hidden="true">
@@ -121,7 +126,7 @@ function bindLoginForm(container) {
 
     if (result.success) {
       showSuccess(result.message || "Login berhasil.");
-      navigate("/session-check");
+      navigate("/dashboard");
     } else {
       showError(result.message || "Login gagal.");
     }
