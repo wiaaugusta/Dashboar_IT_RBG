@@ -230,6 +230,59 @@
   }
 }
 
+/* ---------- CCTV TABLE -> CARD (mobile, docs/modules/CCTV.md #25-26) ---------- */
+/* Teknik CSS murni: struktur <table> tetap sama di HTML/JS, hanya
+   tampilannya yang berubah jadi kartu di layar kecil. Setiap <td>
+   sudah punya atribut data-label (diisi dari cctv.js) untuk dijadikan
+   label di depan nilainya. */
+@media (max-width: 768px) {
+  .cctv-table thead {
+    display: none;
+  }
+
+  .cctv-table,
+  .cctv-table tbody,
+  .cctv-table tr,
+  .cctv-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .cctv-table tr {
+    padding: var(--space-4);
+    border-bottom: 8px solid var(--color-background);
+  }
+
+  .cctv-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    border-bottom: none;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .cctv-table td[data-label]::before {
+    content: attr(data-label);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .cctv-table td[data-label=""]::before {
+    content: none;
+  }
+
+  .cctv-table td[data-label=""] {
+    justify-content: flex-end;
+    padding-top: var(--space-3);
+  }
+}
+
 /* ---------- MODAL ---------- */
 /* Reusable - komponen pertama dipakai CCTV, layak dipromosikan jadi
    shared component kalau modul lain butuh (docs/UI_AND_DESIGN.md #28). */

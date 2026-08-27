@@ -157,13 +157,13 @@ function renderCctvRow(item) {
   const statusClass = (item.status || "").toUpperCase().indexOf("BARU") !== -1 ? "success" : "info";
   return `
     <tr>
-      <td>${escapeHtml(item.kdStore)}</td>
-      <td>${escapeHtml(item.namaStore)}</td>
-      <td>${escapeHtml(item.itArea)}</td>
-      <td><span class="badge badge-${statusClass}">${escapeHtml(item.status)}</span></td>
-      <td>${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">Buka</a>` : "-"}</td>
-      <td class="cctv-table__muted">${escapeHtml(item.updatedInfo || "-")}</td>
-      <td><button type="button" class="btn btn-ghost" data-edit-kdstore="${escapeAttr(item.kdStore)}">Edit</button></td>
+      <td data-label="Kode Toko">${escapeHtml(item.kdStore)}</td>
+      <td data-label="Nama Toko">${escapeHtml(item.namaStore)}</td>
+      <td data-label="Area">${escapeHtml(item.itArea)}</td>
+      <td data-label="Status"><span class="badge badge-${statusClass}">${escapeHtml(item.status)}</span></td>
+      <td data-label="URL">${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">Buka</a>` : "-"}</td>
+      <td data-label="Terakhir Update" class="cctv-table__muted">${escapeHtml(item.updatedInfo || "-")}</td>
+      <td data-label=""><button type="button" class="btn btn-ghost" data-edit-kdstore="${escapeAttr(item.kdStore)}">Edit</button></td>
     </tr>
   `;
 }
