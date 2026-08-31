@@ -104,11 +104,22 @@ async function loadCctvList(contentEl, session) {
   listArea.innerHTML = renderTableSkeleton();
   paginationArea.innerHTML = "";
 
-  const result = await apiRequest(
-    "getCCTV",
-    {},
-    { sessionToken: session.sessionToken }
-  );
+  const searchValue = contentEl
+  .querySelector("#cctvSearchInput")
+  .value
+  .trim();
+
+const result = await apiRequest(
+  "getCCTV",
+  {
+    page: currentPage,
+    limit: PAGE_SIZE,
+    search: searchValue
+  },
+  {
+    sessionToken: session.sessionToken
+  }
+);
 
   if (!result.success) {
     listArea.innerHTML = `
@@ -123,32 +134,36 @@ async function loadCctvList(contentEl, session) {
     return;
   }
 
-  cctvListCache = result.data || [];
-  currentPage = 1;
-  const searchValue = contentEl.querySelector("#cctvSearchInput").value;
-  renderCctvList(contentEl, filterCctvList(cctvListCache, searchValue));
+  const data = result.data || {};
+
+cctvListCache = Array.isArray(data.items) ? data.items : [];
+currentPage = Number(data.page) || 1;
+
+renderCctvList(contentEl, cctvListCache, {
+  total: Number(data.total) || 0,
+  page: Number(data.page) || 1,
+  limit: Number(data.limit) || PAGE_SIZE,
+  totalPages: Number(data.totalPages) || 1
+});
 }
 
-function filterCctvList(list, query) {
-  const normalized = (query || "").trim().toUpperCase();
-  if (!normalized) return list;
-
-  return list.filter((item) =>
-    (item.kdStore || "").toUpperCase().includes(normalized) ||
-    (item.namaStore || "").toUpperCase().includes(normalized)
-  );
-}
 
 /** Stage 2: render halaman aktif saja + pagination + total count global. */
-function renderCctvList(contentEl, fullList) {
+function renderCctvList(contentEl, items, meta) {
   const listArea = contentEl.querySelector("#cctvListArea");
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
   const countEl = contentEl.querySelector("#cctvCount");
 
-  const totalRecords = fullList.length;
-  countEl.textContent = totalRecords > 0 ? `${totalRecords} toko` : "";
+  const totalRecords = meta.total;
+  const page = meta.page;
+  const limit = meta.limit;
+  const totalPages = meta.totalPages;
 
-  if (totalRecords === 0) {
+  countEl.textContent = totalRecords > 0
+    ? `${totalRecords} toko`
+    : "";
+
+  if (!items.length) {
     listArea.innerHTML = `
       <div class="state-card">
         <div class="state-card__icon state-card__icon--empty">-</div>
@@ -156,15 +171,12 @@ function renderCctvList(contentEl, fullList) {
         <p class="state-card__subtitle">Coba ubah kata kunci pencarian.</p>
       </div>
     `;
+
     paginationArea.innerHTML = "";
     return;
   }
 
-  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
-  if (currentPage > totalPages) currentPage = totalPages;
-
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = fullList.slice(startIndex, startIndex + PAGE_SIZE);
+  const startIndex = (page - 1) * limit;
 
   listArea.innerHTML = `
     <div class="cctv-table-wrapper">
@@ -182,7 +194,9 @@ function renderCctvList(contentEl, fullList) {
           </tr>
         </thead>
         <tbody>
-          ${pageItems.map((item, i) => renderCctvRow(item, startIndex + i + 1)).join("")}
+          ${items.map((item, i) =>
+            renderCctvRow(item, startIndex + i + 1)
+          ).join("")}
         </tbody>
       </table>
     </div>
@@ -190,12 +204,22 @@ function renderCctvList(contentEl, fullList) {
 
   listArea.querySelectorAll("[data-edit-kdstore]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      openCctvModal(contentEl, btn.getAttribute("data-edit-kdstore"));
+      openCctvModal(
+        contentEl,
+        btn.getAttribute("data-edit-kdstore")
+      );
     });
   });
 
-  paginationArea.innerHTML = renderPagination(currentPage, totalPages, startIndex, pageItems.length, totalRecords);
-  bindPagination(contentEl, fullList);
+  paginationArea.innerHTML = renderPagination(
+    page,
+    totalPages,
+    startIndex,
+    items.length,
+    totalRecords
+  );
+
+  bindPagination(contentEl, meta);
 }
 
 function renderPagination(page, totalPages, startIndex, pageCount, totalRecords) {
@@ -250,19 +274,26 @@ function getPageNumberList(page, totalPages) {
   return result;
 }
 
-function bindPagination(contentEl, fullList) {
+function bindPagination(contentEl, meta) {
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
+
   paginationArea.querySelectorAll("[data-page]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const value = btn.getAttribute("data-page");
-      const totalPages = Math.max(1, Math.ceil(fullList.length / PAGE_SIZE));
 
-      if (value === "prev") currentPage = Math.max(1, currentPage - 1);
-      else if (value === "next") currentPage = Math.min(totalPages, currentPage + 1);
-      else currentPage = parseInt(value, 10);
+      if (value === "prev") {
+        currentPage = Math.max(1, meta.page - 1);
+      } else if (value === "next") {
+        currentPage = Math.min(meta.totalPages, meta.page + 1);
+      } else {
+        currentPage = parseInt(value, 10);
+      }
 
-      renderCctvList(contentEl, fullList);
-      contentEl.querySelector("#cctvListArea").scrollIntoView({ block: "nearest" });
+      loadCctvList(contentEl, getSession());
+
+      contentEl
+        .querySelector("#cctvListArea")
+        .scrollIntoView({ block: "nearest" });
     });
   });
 }
