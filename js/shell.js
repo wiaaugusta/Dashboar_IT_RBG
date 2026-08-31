@@ -1,17 +1,16 @@
 /**
  * SHELL.JS - APPLICATION SHELL
  * --------------------------------
- * Kerangka utama aplikasi setelah login: sidebar + header + content area.
- * Dipakai oleh SEMUA halaman setelah login (dashboard.js, coming-soon.js,
- * dan nanti cctv.js) lewat renderShell() - supaya sidebar/header konsisten
- * di semua halaman tanpa duplikasi kode (docs/ARCHITECTURE.md #5, #26).
+ * Kerangka utama aplikasi setelah login: sidebar + header + content area
+ * + bottom nav (mobile). Dipakai SEMUA halaman setelah login lewat
+ * renderShell() (docs/ARCHITECTURE.md #5, #26).
  *
- * Markup sidebar dipakai ulang untuk drawer mobile (docs/UI_AND_DESIGN.md
- * #13, #41) - cukup satu markup, dibedakan lewat CSS + class "is-open"
- * pada breakpoint mobile.
+ * STAGE 2 UPDATE: menambahkan Bottom Navigation untuk mobile
+ * (docs/UI_AND_DESIGN.md #7). Item "More" membuka drawer sidebar yang
+ * sudah ada - tidak ada mekanisme baru, hanya reuse openDrawer().
  */
 
-import { NAV_ITEMS, isVisibleForRole, findParentKey } from "./nav-config.js";
+import { NAV_ITEMS, BOTTOM_NAV_ITEMS, isVisibleForRole, findParentKey } from "./nav-config.js";
 import { getSession, logout } from "./auth.js";
 import { navigate } from "./router.js";
 
@@ -20,10 +19,10 @@ let expandedGroups = new Set();
 /**
  * @param {HTMLElement} container
  * @param {object} options
- * @param {string} options.activeKey - key menu yang sedang aktif, contoh "cctv"
- * @param {string} options.pageTitle - judul ditampilkan di header
- * @param {string} options.contentHtml - HTML untuk area konten
- * @param {(contentEl: HTMLElement) => void} [options.onContentMount] - dipanggil setelah HTML konten ter-render, untuk bind event
+ * @param {string} options.activeKey
+ * @param {string} options.pageTitle
+ * @param {string} options.contentHtml
+ * @param {(contentEl: HTMLElement) => void} [options.onContentMount]
  */
 export function renderShell(container, options) {
   const session = getSession();
@@ -73,6 +72,7 @@ export function renderShell(container, options) {
       </div>
     </div>
     <div class="app-drawer-overlay" id="appDrawerOverlay"></div>
+    ${renderBottomNav(session.role, options.activeKey)}
   `;
 
   bindShellEvents(container);
@@ -125,11 +125,39 @@ function renderLeafItem(item, activeKey, isChild) {
   `;
 }
 
+/** Stage 2: Bottom Navigation - hanya dirender/terlihat di mobile (CSS). */
+function renderBottomNav(role, activeKey) {
+  const items = BOTTOM_NAV_ITEMS.filter((item) => isVisibleForRole(item, role));
+
+  const itemsHtml = items
+    .map((item) => {
+      const isActive = item.key === activeKey;
+      if (item.action === "open-drawer") {
+        return `
+          <button type="button" class="app-bottom-nav__item" data-bottom-nav-action="open-drawer">
+            <span class="app-bottom-nav__icon">${escapeHtml(item.icon)}</span>
+            <span>${escapeHtml(item.label)}</span>
+          </button>
+        `;
+      }
+      return `
+        <a href="#${item.path}" class="app-bottom-nav__item ${isActive ? "is-active" : ""}">
+          <span class="app-bottom-nav__icon">${escapeHtml(item.icon)}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </a>
+      `;
+    })
+    .join("");
+
+  return `<nav class="app-bottom-nav" id="appBottomNav">${itemsHtml}</nav>`;
+}
+
 function bindShellEvents(container) {
   const sidebar = container.querySelector("#appSidebar");
   const overlay = container.querySelector("#appDrawerOverlay");
   const hamburgerBtn = container.querySelector("#hamburgerBtn");
   const logoutBtn = container.querySelector("#logoutBtn");
+  const bottomNav = container.querySelector("#appBottomNav");
 
   function openDrawer() {
     sidebar.classList.add("is-open");
@@ -144,12 +172,15 @@ function bindShellEvents(container) {
   hamburgerBtn.addEventListener("click", openDrawer);
   overlay.addEventListener("click", closeDrawer);
 
-  // Tutup drawer otomatis saat memilih menu (mobile UX - docs/UI_AND_DESIGN.md #38)
   container.querySelectorAll("[data-nav-key]").forEach((link) => {
     link.addEventListener("click", closeDrawer);
   });
 
-  // Expand/collapse submenu
+  if (bottomNav) {
+    const moreBtn = bottomNav.querySelector('[data-bottom-nav-action="open-drawer"]');
+    if (moreBtn) moreBtn.addEventListener("click", openDrawer);
+  }
+
   container.querySelectorAll("[data-group-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-group-toggle");
@@ -158,10 +189,6 @@ function bindShellEvents(container) {
       } else {
         expandedGroups.add(key);
       }
-      // Re-render shell supaya state expand/collapse konsisten.
-      // Konten halaman tidak hilang karena caller memanggil renderShell
-      // lagi lewat router saat navigasi - untuk toggle submenu saja,
-      // kita cukup toggle class di DOM langsung (lebih ringan dari re-render).
       const group = btn.closest(".app-nav-group");
       group.classList.toggle("is-expanded");
       btn.querySelector(".app-nav-item__chevron").textContent = group.classList.contains("is-expanded") ? "\u2212" : "+";

@@ -1,19 +1,24 @@
 /**
  * MODULES/CCTV.JS - HALAMAN CCTV
  * -----------------------------------
- * Fitur (docs/modules/CCTV.md, kebutuhan bisnis dari chat Phase 6/7):
- * - List toko: IT_STORE hanya lihat toko miliknya (difilter backend
- *   lewat NIK), ADMIN lihat semua toko.
- * - Search by kode/nama toko (client-side - dataset per user kecil).
- * - Klik toko -> modal edit terisi otomatis dari data existing.
- * - Field Username/Password yang tampil di form BERUBAH mengikuti
- *   Status (DVR BARU -> kolom K-N, DVR LAMA -> kolom G-J).
- * - Update bersifat partial (hanya field yang diisi user yang dikirim).
- *
- * Password DVR CCTV di sini SENGAJA ditampilkan ke form (beda dari
- * password login aplikasi) - karena tujuan modul ini memang untuk IT
- * mengelola credential DVR tersebut. Akses tetap dibatasi oleh
- * authentication + authorization role/NIK di backend.
+ * STAGE 2 UPDATE (docs/UI_AND_DESIGN.md #10-#19):
+ * - Client-side pagination (PAGE_SIZE) + nomor urut mengikuti posisi
+ *   pagination (tidak reset ke 1 tiap halaman) + total record selalu
+ *   terlihat, sesuai #11. Catatan performa (#12): dataset di sini tetap
+ *   diambil sekaligus dari getCCTV karena backend existing belum
+ *   mendukung server-side pagination - pagination Stage 2 ini
+ *   memperbaiki RENDERING (tidak melukis ratusan row sekaligus ke DOM),
+ *   bukan menghilangkan biaya network. Server-side pagination sungguhan
+ *   butuh perubahan API getCCTV (param page/limit) - itu perubahan
+ *   backend yang harus didiskusikan terpisah (di luar file frontend ini).
+ * - Skeleton loading menggantikan teks "Memuat data..." polos (#13).
+ * - URL suggestion popover dari 5 preset URL (#20).
+ * - Generated password UX read-only + tombol "Gunakan" (#17-#19).
+ *   Password digenerate oleh BACKEND lewat action baru
+ *   "generateCctvPassword" (deterministic, HMAC + secret di server -
+ *   frontend TIDAK menyimpan/menghitung secret apa pun, sesuai #17).
+ *   Backend Apps Script perlu menambahkan action ini; belum ada di
+ *   scope frontend ini karena file .gs tidak berada di repo frontend.
  */
 
 import { renderShell } from "../shell.js";
@@ -22,8 +27,19 @@ import { getSession } from "../auth.js";
 import { showSuccess, showError } from "../ui.js";
 
 const STATUS_OPTIONS = ["OK - DVR BARU", "OK - DVR LAMA"];
+const PAGE_SIZE = 10;
+
+const URL_PRESETS = [
+  "http://10.234.234.8/doc/page/login.asp",
+  "http://10.234.234.8/",
+  "http://10.234.234.8:8899/",
+  "http://10.234.234.8:9090/doc/page/login.asp",
+  "http://10.234.234.8:9090/"
+];
 
 let cctvListCache = [];
+let currentPage = 1;
+let searchDebounceTimer = null;
 
 export async function renderCctvPage(container) {
   const session = getSession();
@@ -42,12 +58,13 @@ export async function renderCctvPage(container) {
         class="input cctv-search-input"
         placeholder="Cari kode toko atau nama toko..."
       />
+      <div class="cctv-toolbar__spacer"></div>
+      <span class="cctv-toolbar__count" id="cctvCount"></span>
       <button type="button" class="btn btn-secondary" id="cctvRefreshBtn">Refresh</button>
     </div>
 
-    <div id="cctvListArea">
-      <div class="placeholder-card">Memuat data CCTV...</div>
-    </div>
+    <div id="cctvListArea">${renderTableSkeleton()}</div>
+    <div id="cctvPaginationArea"></div>
 
     <div class="modal-overlay" id="cctvModalOverlay"></div>
     <div class="modal" id="cctvModal" role="dialog" aria-modal="true"></div>
@@ -69,7 +86,11 @@ function bindCctvPage(contentEl, session) {
   const refreshBtn = contentEl.querySelector("#cctvRefreshBtn");
 
   searchInput.addEventListener("input", () => {
-    renderCctvList(contentEl, filterCctvList(cctvListCache, searchInput.value));
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      currentPage = 1;
+      renderCctvList(contentEl, filterCctvList(cctvListCache, searchInput.value));
+    }, 250);
   });
 
   refreshBtn.addEventListener("click", () => loadCctvList(contentEl, session));
@@ -79,7 +100,9 @@ function bindCctvPage(contentEl, session) {
 
 async function loadCctvList(contentEl, session) {
   const listArea = contentEl.querySelector("#cctvListArea");
-  listArea.innerHTML = `<div class="placeholder-card">Memuat data CCTV...</div>`;
+  const paginationArea = contentEl.querySelector("#cctvPaginationArea");
+  listArea.innerHTML = renderTableSkeleton();
+  paginationArea.innerHTML = "";
 
   const result = await apiRequest(
     "getCCTV",
@@ -89,8 +112,10 @@ async function loadCctvList(contentEl, session) {
 
   if (!result.success) {
     listArea.innerHTML = `
-      <div class="placeholder-card placeholder-card--center">
-        <p class="placeholder-card__title">Data CCTV gagal dimuat.</p>
+      <div class="state-card">
+        <div class="state-card__icon state-card__icon--error">!</div>
+        <p class="state-card__title">Data CCTV gagal dimuat.</p>
+        <p class="state-card__subtitle">Periksa koneksi Anda lalu coba lagi.</p>
         <button type="button" class="btn btn-secondary" id="cctvRetryBtn">Coba Lagi</button>
       </div>
     `;
@@ -99,6 +124,7 @@ async function loadCctvList(contentEl, session) {
   }
 
   cctvListCache = result.data || [];
+  currentPage = 1;
   const searchValue = contentEl.querySelector("#cctvSearchInput").value;
   renderCctvList(contentEl, filterCctvList(cctvListCache, searchValue));
 }
@@ -113,23 +139,39 @@ function filterCctvList(list, query) {
   );
 }
 
-function renderCctvList(contentEl, list) {
+/** Stage 2: render halaman aktif saja + pagination + total count global. */
+function renderCctvList(contentEl, fullList) {
   const listArea = contentEl.querySelector("#cctvListArea");
+  const paginationArea = contentEl.querySelector("#cctvPaginationArea");
+  const countEl = contentEl.querySelector("#cctvCount");
 
-  if (list.length === 0) {
+  const totalRecords = fullList.length;
+  countEl.textContent = totalRecords > 0 ? `${totalRecords} toko` : "";
+
+  if (totalRecords === 0) {
     listArea.innerHTML = `
-      <div class="placeholder-card placeholder-card--center">
-        <p class="placeholder-card__title">Data CCTV tidak ditemukan.</p>
+      <div class="state-card">
+        <div class="state-card__icon state-card__icon--empty">-</div>
+        <p class="state-card__title">Data CCTV tidak ditemukan.</p>
+        <p class="state-card__subtitle">Coba ubah kata kunci pencarian.</p>
       </div>
     `;
+    paginationArea.innerHTML = "";
     return;
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = fullList.slice(startIndex, startIndex + PAGE_SIZE);
 
   listArea.innerHTML = `
     <div class="cctv-table-wrapper">
       <table class="cctv-table">
         <thead>
           <tr>
+            <th>No</th>
             <th>Kode Toko</th>
             <th>Nama Toko</th>
             <th>Area</th>
@@ -140,7 +182,7 @@ function renderCctvList(contentEl, list) {
           </tr>
         </thead>
         <tbody>
-          ${list.map((item) => renderCctvRow(item)).join("")}
+          ${pageItems.map((item, i) => renderCctvRow(item, startIndex + i + 1)).join("")}
         </tbody>
       </table>
     </div>
@@ -151,12 +193,103 @@ function renderCctvList(contentEl, list) {
       openCctvModal(contentEl, btn.getAttribute("data-edit-kdstore"));
     });
   });
+
+  paginationArea.innerHTML = renderPagination(currentPage, totalPages, startIndex, pageItems.length, totalRecords);
+  bindPagination(contentEl, fullList);
 }
 
-function renderCctvRow(item) {
+function renderPagination(page, totalPages, startIndex, pageCount, totalRecords) {
+  if (totalPages <= 1) {
+    return `<div class="pagination__info">Menampilkan ${totalRecords} dari ${totalRecords} toko</div>`;
+  }
+
+  const rangeStart = startIndex + 1;
+  const rangeEnd = startIndex + pageCount;
+
+  return `
+    <div class="pagination">
+      <div class="pagination__info">
+        Menampilkan ${rangeStart}-${rangeEnd} dari ${totalRecords} toko
+      </div>
+      <div class="pagination__controls">
+        <button type="button" class="pagination__btn" data-page="prev" ${page === 1 ? "disabled" : ""}>&lsaquo;</button>
+        ${renderPageNumbers(page, totalPages)}
+        <button type="button" class="pagination__btn" data-page="next" ${page === totalPages ? "disabled" : ""}>&rsaquo;</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderPageNumbers(page, totalPages) {
+  const pages = getPageNumberList(page, totalPages);
+  return pages
+    .map((p) =>
+      p === "..."
+        ? `<span class="pagination__ellipsis">&hellip;</span>`
+        : `<button type="button" class="pagination__btn ${p === page ? "is-active" : ""}" data-page="${p}">${p}</button>`
+    )
+    .join("");
+}
+
+/** Maks 7 slot terlihat: 1 ... p-1 p p+1 ... total (dipangkas otomatis kalau totalPages kecil). */
+function getPageNumberList(page, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = new Set([1, totalPages, page, page - 1, page + 1]);
+  const sorted = Array.from(pages).filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+
+  const result = [];
+  let prev = null;
+  sorted.forEach((p) => {
+    if (prev !== null && p - prev > 1) result.push("...");
+    result.push(p);
+    prev = p;
+  });
+  return result;
+}
+
+function bindPagination(contentEl, fullList) {
+  const paginationArea = contentEl.querySelector("#cctvPaginationArea");
+  paginationArea.querySelectorAll("[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const value = btn.getAttribute("data-page");
+      const totalPages = Math.max(1, Math.ceil(fullList.length / PAGE_SIZE));
+
+      if (value === "prev") currentPage = Math.max(1, currentPage - 1);
+      else if (value === "next") currentPage = Math.min(totalPages, currentPage + 1);
+      else currentPage = parseInt(value, 10);
+
+      renderCctvList(contentEl, fullList);
+      contentEl.querySelector("#cctvListArea").scrollIntoView({ block: "nearest" });
+    });
+  });
+}
+
+function renderTableSkeleton() {
+  const rows = Array.from({ length: 6 })
+    .map(
+      () => `
+        <div class="skeleton-table-row">
+          <div class="skeleton" style="width:32px"></div>
+          <div class="skeleton" style="flex:1.2"></div>
+          <div class="skeleton" style="flex:1.5"></div>
+          <div class="skeleton" style="flex:0.8"></div>
+          <div class="skeleton" style="flex:1"></div>
+        </div>
+      `
+    )
+    .join("");
+
+  return `<div class="cctv-table-wrapper">${rows}</div>`;
+}
+
+function renderCctvRow(item, rowNumber) {
   const statusClass = (item.status || "").toUpperCase().indexOf("BARU") !== -1 ? "success" : "info";
   return `
     <tr>
+      <td data-label="No" class="cctv-table__index">${rowNumber}</td>
       <td data-label="Kode Toko">${escapeHtml(item.kdStore)}</td>
       <td data-label="Nama Toko">${escapeHtml(item.namaStore)}</td>
       <td data-label="Area">${escapeHtml(item.itArea)}</td>
@@ -175,7 +308,13 @@ async function openCctvModal(contentEl, kdStore) {
 
   overlay.classList.add("is-visible");
   modal.classList.add("is-visible");
-  modal.innerHTML = `<div class="modal__body"><p>Memuat data toko...</p></div>`;
+  modal.innerHTML = `
+    <div class="modal__body">
+      <div class="skeleton skeleton-text" style="width:50%"></div>
+      <div class="skeleton skeleton-text" style="width:80%"></div>
+      <div class="skeleton skeleton-text"></div>
+    </div>
+  `;
 
   const result = await apiRequest(
     "getCCTVDetail",
@@ -217,7 +356,14 @@ function renderCctvForm(contentEl, detail) {
 
       <div class="form-group">
         <label class="form-label" for="cctvUrlInput">URL CCTV</label>
-        <input type="text" id="cctvUrlInput" class="input" value="${escapeAttr(detail.url || "")}" />
+        <div class="url-suggest-wrapper">
+          <input type="text" id="cctvUrlInput" class="input" autocomplete="off"
+            value="${escapeAttr(detail.url || "")}" placeholder="Pilih atau ketik URL..." />
+          <div class="url-suggest-popover" id="cctvUrlPopover">
+            ${URL_PRESETS.map((u) => `<button type="button" class="url-suggest-item" data-url-preset="${escapeAttr(u)}">${escapeHtml(u)}</button>`).join("")}
+          </div>
+        </div>
+        <span class="form-hint">Klik field untuk melihat preset URL yang tersedia.</span>
       </div>
 
       <div id="cctvCredentialFields"></div>
@@ -229,6 +375,8 @@ function renderCctvForm(contentEl, detail) {
     </form>
   `;
 
+  bindUrlSuggestion(modal);
+
   const statusInput = modal.querySelector("#cctvStatusInput");
   const credentialFieldsContainer = modal.querySelector("#cctvCredentialFields");
 
@@ -239,11 +387,12 @@ function renderCctvForm(contentEl, detail) {
 
     credentialFieldsContainer.innerHTML = `
       <p class="modal__section-title">${isDvrBaru ? "Kredensial DVR Baru" : "Kredensial DVR Lama"}</p>
-      ${renderCredentialInputPair("User", groupKey, "userUsername", "userPassword", group)}
-      ${renderCredentialInputPair("Admin", groupKey, "adminUsername", "adminPassword", group)}
+      ${renderCredentialInputPair("User", groupKey, "userUsername", "userPassword", group, detail.kdStore)}
+      ${renderCredentialInputPair("Admin", groupKey, "adminUsername", "adminPassword", group, detail.kdStore)}
     `;
 
     bindPasswordToggles(credentialFieldsContainer);
+    bindGeneratePasswordButtons(credentialFieldsContainer, groupKey, detail.kdStore);
   }
 
   statusInput.addEventListener("change", renderCredentialFieldsForStatus);
@@ -257,9 +406,36 @@ function renderCctvForm(contentEl, detail) {
   });
 }
 
-function renderCredentialInputPair(label, groupKey, usernameKey, passwordKey, group) {
+/** Stage 2 - docs/UI_AND_DESIGN.md #20: popover preset URL saat field difokus. */
+function bindUrlSuggestion(modal) {
+  const urlInput = modal.querySelector("#cctvUrlInput");
+  const popover = modal.querySelector("#cctvUrlPopover");
+
+  urlInput.addEventListener("focus", () => popover.classList.add("is-visible"));
+
+  document.addEventListener("click", function outsideClick(event) {
+    if (!modal.isConnected) {
+      document.removeEventListener("click", outsideClick);
+      return;
+    }
+    if (!event.target.closest(".url-suggest-wrapper")) {
+      popover.classList.remove("is-visible");
+    }
+  });
+
+  popover.querySelectorAll("[data-url-preset]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      urlInput.value = btn.getAttribute("data-url-preset");
+      popover.classList.remove("is-visible");
+      urlInput.focus();
+    });
+  });
+}
+
+function renderCredentialInputPair(label, groupKey, usernameKey, passwordKey, group, kdStore) {
   const usernameId = `cctv_${groupKey}_${usernameKey}`;
   const passwordId = `cctv_${groupKey}_${passwordKey}`;
+  const generateBoxId = `cctv_${groupKey}_${passwordKey}_gen`;
 
   return `
     <div class="cctv-credential-pair">
@@ -277,7 +453,89 @@ function renderCredentialInputPair(label, groupKey, usernameKey, passwordKey, gr
         </div>
       </div>
     </div>
+    <div class="form-group" data-generate-group="${passwordId}">
+      <div class="generated-password-box" id="${generateBoxId}">
+        <span class="generated-password-box__value generated-password-box__value--placeholder" data-gen-value>
+          Belum ada password baru
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" data-generate-password
+          data-target-input="${passwordId}" data-kdstore="${escapeAttr(kdStore)}">
+          Generate Password Baru
+        </button>
+      </div>
+    </div>
   `;
+}
+
+/**
+ * Stage 2 - docs/UI_AND_DESIGN.md #17-#19.
+ * Meminta password baru ke BACKEND (bukan dihitung di frontend), lalu
+ * menampilkannya read-only dengan tombol "Gunakan" untuk mengisi field
+ * password sesungguhnya. Membutuhkan action backend "generateCctvPassword"
+ * (belum ada di Apps Script existing - lihat catatan di header file ini).
+ */
+function bindGeneratePasswordButtons(scopeEl, groupKey, kdStore) {
+  scopeEl.querySelectorAll("[data-generate-password]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const targetInputId = btn.getAttribute("data-target-input");
+      const box = btn.closest(".generated-password-box");
+      const valueEl = box.querySelector("[data-gen-value]");
+      const session = getSession();
+
+      btn.disabled = true;
+      const originalLabel = btn.textContent;
+      btn.innerHTML = `<span class="btn-spinner"></span> Membuat...`;
+
+      const purpose = targetInputId.indexOf("admin") !== -1 ? "admin" : "user";
+      const dvrType = groupKey === "dvrBaru" ? "DVR_BARU" : "DVR_LAMA";
+
+      const result = await apiRequest(
+        "generateCctvPassword",
+        { kdStore, dvrType, purpose },
+        { sessionToken: session.sessionToken }
+      );
+
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+
+      if (!result.success || !result.data || !result.data.password) {
+        showError(result.message || "Gagal membuat password baru.");
+        return;
+      }
+
+      const generatedPassword = result.data.password;
+
+      valueEl.textContent = generatedPassword;
+      valueEl.classList.remove("generated-password-box__value--placeholder");
+
+      if (!box.querySelector("[data-use-password]")) {
+        const useBtn = document.createElement("button");
+        useBtn.type = "button";
+        useBtn.className = "btn btn-primary btn-sm";
+        useBtn.setAttribute("data-use-password", "");
+        useBtn.textContent = "Gunakan";
+        box.appendChild(useBtn);
+
+        useBtn.addEventListener("click", () => {
+          const targetInput = scopeEl.querySelector(`#${targetInputId}`) || document.getElementById(targetInputId);
+          if (targetInput) {
+            targetInput.value = generatedPassword;
+            targetInput.type = "text";
+            const toggleBtn = scopeEl.querySelector(`[data-toggle-for="${targetInputId}"]`);
+            if (toggleBtn) toggleBtn.textContent = "Hide";
+          }
+
+          let check = box.querySelector(".generated-password-box__check");
+          if (!check) {
+            check = document.createElement("span");
+            check.className = "generated-password-box__check";
+            box.insertBefore(check, useBtn);
+          }
+          check.textContent = "\u2713 Dipilih";
+        });
+      }
+    });
+  });
 }
 
 function bindPasswordToggles(scopeEl) {
@@ -316,7 +574,7 @@ async function submitCctvUpdate(contentEl, detail) {
   payload.data[groupKey] = credentialData;
 
   saveBtn.disabled = true;
-  saveBtn.textContent = "Menyimpan...";
+  saveBtn.innerHTML = `<span class="btn-spinner"></span> Menyimpan...`;
 
   const result = await apiRequest("updateCCTV", payload, { sessionToken: session.sessionToken });
 

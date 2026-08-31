@@ -1,18 +1,20 @@
 /**
  * NAV-CONFIG.JS - STRUKTUR NAVIGASI (SUMBER TUNGGAL)
  * -------------------------------------------------------
- * Satu-satunya tempat daftar menu didefinisikan. Dipakai oleh:
- * - shell.js -> merender sidebar & drawer mobile
- * - app.js   -> mendaftarkan route ke router secara otomatis (loop)
+ * Dipakai oleh shell.js (sidebar, drawer, bottom nav) dan app.js (routing).
  *
- * Kenapa disatukan di sini (bukan ditulis manual di 2 tempat):
- * supaya menu sidebar dan route yang terdaftar TIDAK PERNAH tidak-sinkron
- * (docs/PROJECT_CONSTITUTION.md #20 - reusable, jangan duplicate).
+ * STAGE 2 UPDATE (docs/UI_AND_DESIGN.md #8):
+ * Menu CCTV disembunyikan sementara untuk role IT_OFFICE
+ * ("menu CCTV tidak ditampilkan sementara waktu" untuk Office/Admin -
+ * pada implementasi saat ini ADMIN tetap butuh CCTV untuk administrasi
+ * penuh, jadi yang direstriksi hanya IT_OFFICE, sesuai kebutuhan bisnis
+ * modul CCTV yang memang punya data per-NIK IT Store).
+ * Ini HANYA UI restriction - backend tetap wajib validasi authorization
+ * (docs/PROJECT_CONSTITUTION.md #7, docs/UI_AND_DESIGN.md #27).
  *
- * "roles": null berarti terlihat oleh semua role yang sudah login.
- * Kalau nanti IT Office butuh menu berbeda dari IT Store, tinggal isi
- * roles: ["ADMIN", "IT_OFFICE"] pada item terkait - TIDAK perlu ubah
- * shell.js atau app.js sama sekali (sudah disiapkan filter-nya).
+ * BOTTOM_NAV_ITEMS: subset kurasi untuk mobile bottom nav
+ * (docs/UI_AND_DESIGN.md #7 - "Home | CCTV | Project | More").
+ * "more" bukan route sungguhan - dia membuka drawer sidebar penuh.
  */
 
 export const NAV_ITEMS = [
@@ -46,7 +48,8 @@ export const NAV_ITEMS = [
       { key: "itam-store", label: "Store", path: "/itam/store", roles: null }
     ]
   },
-  { key: "cctv", label: "CCTV", path: "/cctv", roles: null },
+  // Office tidak melihat menu CCTV (docs/UI_AND_DESIGN.md #8).
+  { key: "cctv", label: "CCTV", path: "/cctv", roles: ["ADMIN", "IT_STORE"] },
   {
     key: "checklist",
     label: "Checklist",
@@ -56,6 +59,14 @@ export const NAV_ITEMS = [
       { key: "checklist-store", label: "Store", path: "/checklist/store", roles: null }
     ]
   }
+];
+
+/** Kurasi menu untuk bottom navigation mobile. "more" = buka drawer. */
+export const BOTTOM_NAV_ITEMS = [
+  { key: "dashboard", label: "Home", path: "/dashboard", icon: "H", roles: null },
+  { key: "cctv", label: "CCTV", path: "/cctv", icon: "C", roles: ["ADMIN", "IT_STORE"] },
+  { key: "checklist-store", label: "Checklist", path: "/checklist/store", icon: "L", roles: null },
+  { key: "more", label: "More", action: "open-drawer", icon: "•••", roles: null }
 ];
 
 /**
@@ -68,8 +79,7 @@ export function isVisibleForRole(item, role) {
 }
 
 /**
- * Meratakan NAV_ITEMS menjadi daftar route yang punya "path" (leaf saja -
- * parent yang punya children tidak punya path sendiri, tidak diroute).
+ * Meratakan NAV_ITEMS menjadi daftar route yang punya "path".
  * @returns {{key: string, label: string, path: string, parentLabel: string|null}[]}
  */
 export function getFlatRoutes() {
