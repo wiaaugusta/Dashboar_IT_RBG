@@ -1,17 +1,10 @@
 /**
- * PAGES/LOGIN.JS - LOGIN PAGE
- * -------------------------------
- * REDESIGN TOTAL (referensi user: kartu login mengambang di atas
- * background, BUKAN panel split penuh layar - lihat percakapan).
- * Struktur baru:
- *   .login-page          -> full viewport, background lembut, konten di tengah
- *   .login-shell         -> ilustrasi (kiri) + kartu (kanan), max-width terbatas
- *   .login-illustration  -> mockup dashboard dekoratif (CSS/SVG asli, bukan
- *                           aset pihak ketiga - aman dari isu hak cipta)
- *   .login-card          -> kartu putih mengambang, badge icon + judul + divider,
- *                           banner error, input ber-icon, tombol pill
- * Logic login (validasi, panggil auth.js) TIDAK berubah.
+ * PAGES/LOGIN.JS - PREMIUM LOGIN PAGE
+ * ------------------------------------
+ * Visual redesign only.
+ * Authentication logic tetap menggunakan auth.js.
  */
+
 import { showError } from "../ui.js";
 import { login, isAuthenticated } from "../auth.js";
 import { navigate } from "../router.js";
@@ -26,65 +19,318 @@ export function renderLoginPage(container) {
   container.innerHTML = `
     <div class="login-page">
       <div class="login-shell">
-        <div class="login-illustration" aria-hidden="true">
-          <div class="login-illustration__blob"></div>
-          <div class="login-illustration__mock">
-            <div class="login-illustration__mock-header">
-              <span class="login-illustration__dot"></span>
-              <span class="login-illustration__dot"></span>
-              <span class="login-illustration__dot"></span>
-            </div>
-            <div class="login-illustration__bar login-illustration__bar--accent" style="width:70%"></div>
-            <div class="login-illustration__bar" style="width:92%"></div>
-            <div class="login-illustration__bar" style="width:55%"></div>
-            <div class="login-illustration__mock-row">
-              <div class="login-illustration__ring-chart"></div>
-              <div class="login-illustration__mock-lines">
-                <div class="login-illustration__bar" style="width:80%"></div>
-                <div class="login-illustration__bar" style="width:40%"></div>
+
+        <!-- =========================
+             LEFT / VISUAL PANEL
+        ========================== -->
+        <section class="login-visual" aria-hidden="true">
+
+          <div class="login-orb login-orb--1"></div>
+          <div class="login-orb login-orb--2"></div>
+          <div class="login-grid"></div>
+
+          <div class="login-visual__top">
+            <div class="login-brand">
+              <div class="login-brand__mark">
+                ${icon("monitor", { size: 25 })}
+              </div>
+
+              <div>
+                <div class="login-brand__name">Dashboard IT</div>
+                <span class="login-brand__sub">IT Platform</span>
               </div>
             </div>
-            <div class="login-illustration__badge">${icon("check", { size: 20 })}</div>
-          </div>
-        </div>
 
-        <div class="login-card">
-          <div class="login-card__header">
-            <span class="login-card__badge">${icon("users", { size: 22 })}</span>
-            <span class="login-card__brand">IT Platform Login</span>
+            <div class="login-live">
+              <span class="login-live__dot"></span>
+              System Online
+            </div>
           </div>
-          <div class="login-card__divider"></div>
+
+          <div class="login-visual__content">
+
+            <div class="login-visual__eyebrow">
+              ${icon("shield", { size: 14 })}
+              SECURE IT MANAGEMENT
+            </div>
+
+            <h1>
+              Manage your IT.
+              <span>Smarter.</span>
+            </h1>
+
+            <p class="login-visual__description">
+              Satu platform untuk membantu Anda memantau,
+              mengelola, dan menjaga operasional IT tetap berjalan
+              dengan lebih cepat dan terkontrol.
+            </p>
+
+            <div class="login-feature-list">
+              <div class="login-feature">
+                <div class="login-feature__icon">
+                  ${icon("video", { size: 17 })}
+                </div>
+                <div>
+                  <strong>CCTV Management</strong>
+                  <span>Kelola data CCTV toko dengan mudah</span>
+                </div>
+              </div>
+
+              <div class="login-feature">
+                <div class="login-feature__icon">
+                  ${icon("shield", { size: 17 })}
+                </div>
+                <div>
+                  <strong>Secure Access</strong>
+                  <span>Akses sesuai role dan kewenangan</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Decorative dashboard mockup -->
+          <div class="login-dashboard">
+
+            <div class="login-dashboard__header">
+              <div class="login-dashboard__brand">
+                <span class="login-dashboard__brand-dot"></span>
+                IT Dashboard
+              </div>
+
+              <div class="login-dashboard__dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div class="login-dashboard__stats">
+
+              <div class="login-stat">
+                <span>Total Store</span>
+                <strong>248</strong>
+                <small>+12 bulan ini</small>
+              </div>
+
+              <div class="login-stat">
+                <span>CCTV Online</span>
+                <strong>96.8%</strong>
+                <small>System healthy</small>
+              </div>
+
+            </div>
+
+            <div class="login-dashboard__chart">
+              <div class="login-chart-title">
+                <span>System Activity</span>
+                <small>Live</small>
+              </div>
+
+              <svg viewBox="0 0 420 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="loginChartFill"
+                    x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(125,211,252,.30)" />
+                    <stop offset="100%" stop-color="rgba(125,211,252,0)" />
+                  </linearGradient>
+                </defs>
+
+                <path
+                  d="M0 92
+                     C30 82 38 88 62 72
+                     S95 65 120 74
+                     S150 54 175 61
+                     S205 78 228 54
+                     S260 43 284 50
+                     S315 28 340 42
+                     S375 50 395 25
+                     S410 24 420 12
+                     L420 120 L0 120 Z"
+                  fill="url(#loginChartFill)"
+                />
+
+                <path
+                  d="M0 92
+                     C30 82 38 88 62 72
+                     S95 65 120 74
+                     S150 54 175 61
+                     S205 78 228 54
+                     S260 43 284 50
+                     S315 28 340 42
+                     S375 50 395 25
+                     S410 24 420 12"
+                  fill="none"
+                  stroke="rgba(186,230,253,.95)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+
+            <div class="login-dashboard__footer">
+              <span>
+                <i></i> Network
+              </span>
+
+              <span>
+                <i></i> CCTV
+              </span>
+
+              <span>
+                <i></i> Server
+              </span>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =========================
+             RIGHT / LOGIN FORM
+        ========================== -->
+        <section class="login-card">
+
+          <div class="login-card__mobile-brand">
+            <div class="login-card__mobile-icon">
+              ${icon("monitor", { size: 21 })}
+            </div>
+
+            <span>Dashboard IT</span>
+          </div>
+
+          <div class="login-card__header">
+
+            <div class="login-card__badge">
+              ${icon("lock", { size: 23 })}
+            </div>
+
+            <span class="login-card__brand">
+              Secure Sign In
+            </span>
+
+          </div>
 
           <div class="login-card__banner" id="loginBanner"></div>
 
-          <h2 class="login-card__heading">Selamat Datang Kembali</h2>
-          <p class="login-card__subtitle">Masuk untuk melanjutkan pekerjaan Anda hari ini.</p>
+          <div class="login-heading-wrap">
+            <h2 class="login-card__heading">
+              Selamat Datang
+            </h2>
+
+            <p class="login-card__subtitle">
+              Masuk menggunakan akun IT Anda untuk
+              melanjutkan ke Dashboard IT.
+            </p>
+          </div>
+
 
           <form id="loginForm" novalidate>
+
+            <!-- NIK -->
             <div class="form-group">
+
+              <label for="nikInput" class="login-field-label">
+                NIK
+              </label>
+
               <div class="input-wrapper input-wrapper--icon">
-                <span class="input-icon">${icon("user", { size: 18 })}</span>
-                <input type="text" id="nikInput" name="nik" class="input input--icon"
-                  placeholder="NIK" autocomplete="username" inputmode="numeric" />
+
+                <span class="input-icon">
+                  ${icon("user", { size: 18 })}
+                </span>
+
+                <input
+                  type="text"
+                  id="nikInput"
+                  name="nik"
+                  class="input input--icon"
+                  placeholder="Masukkan NIK Anda"
+                  autocomplete="username"
+                  inputmode="numeric"
+                />
+
               </div>
-              <span class="form-error-text" id="nikError"></span>
+
+              <span
+                class="form-error-text"
+                id="nikError">
+              </span>
+
             </div>
 
+
+            <!-- PASSWORD -->
             <div class="form-group">
+
+              <label for="passwordInput" class="login-field-label">
+                Password
+              </label>
+
               <div class="input-wrapper input-wrapper--icon">
-                <span class="input-icon">${icon("lock", { size: 18 })}</span>
-                <input type="password" id="passwordInput" name="password" class="input input--icon"
-                  placeholder="Password" autocomplete="current-password" />
-                <button type="button" class="password-toggle-btn" id="togglePasswordBtn" aria-label="Tampilkan password">Show</button>
+
+                <span class="input-icon">
+                  ${icon("lock", { size: 18 })}
+                </span>
+
+                <input
+                  type="password"
+                  id="passwordInput"
+                  name="password"
+                  class="input input--icon"
+                  placeholder="Masukkan password"
+                  autocomplete="current-password"
+                />
+
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  id="togglePasswordBtn"
+                  aria-label="Tampilkan password">
+                  Show
+                </button>
+
               </div>
-              <span class="form-error-text" id="passwordError"></span>
+
+              <span
+                class="form-error-text"
+                id="passwordError">
+              </span>
+
             </div>
 
-            <button type="submit" class="btn btn-primary btn-pill login-submit-btn" id="loginSubmitBtn">
-              <span>Masuk ke Akun Saya</span>${icon("arrow-right", { size: 18 })}
+
+            <!-- SUBMIT -->
+            <button
+              type="submit"
+              class="btn btn-primary btn-pill login-submit-btn"
+              id="loginSubmitBtn">
+
+              <span>Masuk ke Dashboard</span>
+
+              ${icon("arrow-right", { size: 18 })}
+
             </button>
+
           </form>
-        </div>
+
+
+          <div class="login-card__footer">
+
+            <span class="login-security">
+              ${icon("shield", { size: 14 })}
+              Secure connection
+            </span>
+
+            <span class="login-version">
+              IT Platform
+            </span>
+
+          </div>
+
+        </section>
+
       </div>
     </div>
   `;
@@ -92,7 +338,9 @@ export function renderLoginPage(container) {
   bindLoginForm(container);
 }
 
+
 function bindLoginForm(container) {
+
   const form = container.querySelector("#loginForm");
   const nikInput = container.querySelector("#nikInput");
   const passwordInput = container.querySelector("#passwordInput");
@@ -100,57 +348,165 @@ function bindLoginForm(container) {
   const submitBtn = container.querySelector("#loginSubmitBtn");
   const banner = container.querySelector("#loginBanner");
 
+
   toggleBtn.addEventListener("click", () => {
+
     const isHidden = passwordInput.type === "password";
-    passwordInput.type = isHidden ? "text" : "password";
-    toggleBtn.textContent = isHidden ? "Hide" : "Show";
-    toggleBtn.setAttribute("aria-label", isHidden ? "Sembunyikan password" : "Tampilkan password");
+
+    passwordInput.type = isHidden
+      ? "text"
+      : "password";
+
+    toggleBtn.textContent = isHidden
+      ? "Hide"
+      : "Show";
+
+    toggleBtn.setAttribute(
+      "aria-label",
+      isHidden
+        ? "Sembunyikan password"
+        : "Tampilkan password"
+    );
+
   });
 
+
   form.addEventListener("submit", async (event) => {
+
     event.preventDefault();
 
     const nik = nikInput.value.trim();
     const password = passwordInput.value;
 
     hideBanner(banner);
-    if (!validateLoginForm(container, nik, password)) return;
+
+    if (!validateLoginForm(
+      container,
+      nik,
+      password
+    )) {
+      return;
+    }
+
 
     submitBtn.disabled = true;
-    const originalContent = submitBtn.innerHTML;
-    submitBtn.innerHTML = `<span class="btn-spinner"></span> Memproses...`;
 
-    const result = await login(nik, password);
+    const originalContent =
+      submitBtn.innerHTML;
 
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = originalContent;
+    submitBtn.innerHTML = `
+      <span class="btn-spinner"></span>
+      Memverifikasi...
+    `;
 
-    if (result.success) {
-      navigate("/dashboard");
-    } else {
-      showBanner(banner, result.message || "NIK atau password tidak valid.");
-      showError(result.message || "Login gagal.");
+
+    try {
+
+      const result = await login(
+        nik,
+        password
+      );
+
+      if (result.success) {
+
+        navigate("/dashboard");
+
+      } else {
+
+        showBanner(
+          banner,
+          result.message ||
+          "NIK atau password tidak valid."
+        );
+
+        showError(
+          result.message ||
+          "Login gagal."
+        );
+
+      }
+
+    } catch (error) {
+
+      showBanner(
+        banner,
+        "Tidak dapat menghubungi server. Silakan coba lagi."
+      );
+
+      showError(
+        "Login gagal. Tidak dapat menghubungi server."
+      );
+
+    } finally {
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalContent;
+
     }
+
   });
+
 }
+
 
 function showBanner(banner, message) {
+
   banner.textContent = message;
   banner.classList.add("is-visible");
+
 }
+
 
 function hideBanner(banner) {
+
   banner.textContent = "";
   banner.classList.remove("is-visible");
+
 }
 
-function validateLoginForm(container, nik, password) {
-  const nikError = container.querySelector("#nikError");
-  const passwordError = container.querySelector("#passwordError");
+
+function validateLoginForm(
+  container,
+  nik,
+  password
+) {
+
+  const nikError =
+    container.querySelector("#nikError");
+
+  const passwordError =
+    container.querySelector("#passwordError");
+
   let isValid = true;
 
-  if (!nik) { nikError.textContent = "NIK wajib diisi."; isValid = false; } else { nikError.textContent = ""; }
-  if (!password) { passwordError.textContent = "Password wajib diisi."; isValid = false; } else { passwordError.textContent = ""; }
+
+  if (!nik) {
+
+    nikError.textContent =
+      "NIK wajib diisi.";
+
+    isValid = false;
+
+  } else {
+
+    nikError.textContent = "";
+
+  }
+
+
+  if (!password) {
+
+    passwordError.textContent =
+      "Password wajib diisi.";
+
+    isValid = false;
+
+  } else {
+
+    passwordError.textContent = "";
+
+  }
+
 
   return isValid;
 }
