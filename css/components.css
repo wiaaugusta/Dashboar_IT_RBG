@@ -69,6 +69,12 @@
   font-size: var(--font-size-small);
 }
 
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
 /* Spinner dipakai di dalam button saat loading (docs/UI_AND_DESIGN.md #13) */
 .btn-spinner {
   width: 15px;
@@ -187,7 +193,10 @@
 .badge-danger { background-color: var(--color-danger-soft); color: var(--color-danger); }
 .badge-info { background-color: var(--color-info-soft); color: var(--color-info); }
 
-/* ---------- SUMMARY CARD (Stage 1 - Dashboard, docs/UI_AND_DESIGN.md #9) ---------- */
+/* ---------- SUMMARY CARD (Dashboard, docs/UI_AND_DESIGN.md #9) ---------- */
+/* UPDATE (moodboard "Nexus/Vektora"): kartu mengambang saat hover (translateY
+   + shadow-xl), icon punya background warna soft per-modul (lihat data-accent
+   di dashboard.js) supaya grid modul tidak monoton satu warna. */
 .summary-card {
   display: flex;
   align-items: flex-start;
@@ -197,25 +206,24 @@
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
 }
 
 .summary-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-xl);
+  border-color: transparent;
+  transform: translateY(-3px);
 }
 
 .summary-card__icon {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-md);
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
+  background-color: var(--accent-soft, var(--color-primary-soft));
+  color: var(--accent, var(--color-primary));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: var(--font-size-small);
   flex-shrink: 0;
 }
 
@@ -227,17 +235,120 @@
   font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--color-text);
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
 }
 
-.summary-card__status {
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--space-3);
+  border-radius: 999px;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+}
+
+.status-pill--active {
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.status-pill--pending {
+  background-color: var(--color-background-offwhite);
+  color: var(--color-text-muted);
+}
+
+/* ---------- DASHBOARD OVERVIEW LAYOUT + DONUT (moodboard "Nexus/Vektora") ---------- */
+.dashboard-overview {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.donut-card {
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.donut-card__title {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-5);
+  align-self: flex-start;
+}
+
+.donut {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color-primary) var(--donut-value, 0%), var(--color-background-offwhite) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.donut__hole {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut__value {
+  font-size: var(--font-size-h3);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.donut__label {
   font-size: var(--font-size-caption);
   color: var(--color-text-muted);
 }
 
-.summary-card__status--active {
-  color: var(--color-success);
-  font-weight: 600;
+.donut-legend {
+  margin-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: stretch;
+  text-align: left;
+}
+
+.donut-legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.donut-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend__dot--active { background-color: var(--color-primary); }
+.donut-legend__dot--pending { background-color: var(--color-background-offwhite); border: 1px solid var(--color-border-strong); }
+
+@media (max-width: 900px) {
+  .dashboard-overview {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---------- SKELETON LOADING (Stage 1, docs/UI_AND_DESIGN.md #13) ---------- */

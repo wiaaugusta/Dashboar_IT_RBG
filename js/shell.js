@@ -1,29 +1,20 @@
 /**
  * SHELL.JS - APPLICATION SHELL
  * --------------------------------
- * Kerangka utama aplikasi setelah login: sidebar + header + content area
- * + bottom nav (mobile). Dipakai SEMUA halaman setelah login lewat
- * renderShell() (docs/ARCHITECTURE.md #5, #26).
- *
- * STAGE 2 UPDATE: menambahkan Bottom Navigation untuk mobile
- * (docs/UI_AND_DESIGN.md #7). Item "More" membuka drawer sidebar yang
- * sudah ada - tidak ada mekanisme baru, hanya reuse openDrawer().
+ * UPDATE (moodboard baru): sidebar & bottom nav sekarang pakai icon
+ * line-style (js/icons.js) di depan label, chevron submenu pakai SVG
+ * (bukan +/- teks), avatar user pakai lingkaran inisial yang lebih
+ * tegas (mengikuti referensi "Nexus/Vektora" - avatar bulat di topbar
+ * & sidebar footer).
  */
 
 import { NAV_ITEMS, BOTTOM_NAV_ITEMS, isVisibleForRole, findParentKey } from "./nav-config.js";
 import { getSession, logout } from "./auth.js";
 import { navigate } from "./router.js";
+import { icon } from "./icons.js";
 
 let expandedGroups = new Set();
 
-/**
- * @param {HTMLElement} container
- * @param {object} options
- * @param {string} options.activeKey
- * @param {string} options.pageTitle
- * @param {string} options.contentHtml
- * @param {(contentEl: HTMLElement) => void} [options.onContentMount]
- */
 export function renderShell(container, options) {
   const session = getSession();
   if (!session) {
@@ -48,10 +39,15 @@ export function renderShell(container, options) {
 
         <div class="app-sidebar__footer">
           <div class="app-user">
-            <div class="app-user__nik">${escapeHtml(session.nik)}</div>
-            <div class="app-user__role">${escapeHtml(session.role)}</div>
+            <div class="app-user__avatar">${escapeHtml(getInitials(session.nik))}</div>
+            <div>
+              <div class="app-user__nik">${escapeHtml(session.nik)}</div>
+              <div class="app-user__role">${escapeHtml(session.role)}</div>
+            </div>
           </div>
-          <button type="button" class="btn btn-ghost app-logout-btn" id="logoutBtn">Logout</button>
+          <button type="button" class="btn btn-ghost app-logout-btn" id="logoutBtn" aria-label="Logout">
+            ${icon("logout", { size: 18 })}
+          </button>
         </div>
       </aside>
 
@@ -99,8 +95,9 @@ function renderNavItem(item, role, activeKey) {
     return `
       <div class="app-nav-group ${isExpanded ? "is-expanded" : ""}">
         <button type="button" class="app-nav-item app-nav-item--group" data-group-toggle="${item.key}">
+          <span class="app-nav-item__icon">${icon(item.icon, { size: 18 })}</span>
           <span class="app-nav-item__label">${escapeHtml(item.label)}</span>
-          <span class="app-nav-item__chevron">${isExpanded ? "\u2212" : "+"}</span>
+          <span class="app-nav-item__chevron">${icon("chevron", { size: 15 })}</span>
         </button>
         <div class="app-nav-submenu">
           ${visibleChildren.map((child) => renderLeafItem(child, activeKey, true)).join("")}
@@ -120,12 +117,12 @@ function renderLeafItem(item, activeKey, isChild) {
       class="app-nav-item ${isChild ? "app-nav-item--child" : ""} ${isActive ? "is-active" : ""}"
       data-nav-key="${item.key}"
     >
+      ${item.icon ? `<span class="app-nav-item__icon">${icon(item.icon, { size: 18 })}</span>` : ""}
       <span class="app-nav-item__label">${escapeHtml(item.label)}</span>
     </a>
   `;
 }
 
-/** Stage 2: Bottom Navigation - hanya dirender/terlihat di mobile (CSS). */
 function renderBottomNav(role, activeKey) {
   const items = BOTTOM_NAV_ITEMS.filter((item) => isVisibleForRole(item, role));
 
@@ -135,14 +132,14 @@ function renderBottomNav(role, activeKey) {
       if (item.action === "open-drawer") {
         return `
           <button type="button" class="app-bottom-nav__item" data-bottom-nav-action="open-drawer">
-            <span class="app-bottom-nav__icon">${escapeHtml(item.icon)}</span>
+            <span class="app-bottom-nav__icon">${icon(item.icon, { size: 20 })}</span>
             <span>${escapeHtml(item.label)}</span>
           </button>
         `;
       }
       return `
         <a href="#${item.path}" class="app-bottom-nav__item ${isActive ? "is-active" : ""}">
-          <span class="app-bottom-nav__icon">${escapeHtml(item.icon)}</span>
+          <span class="app-bottom-nav__icon">${icon(item.icon, { size: 20 })}</span>
           <span>${escapeHtml(item.label)}</span>
         </a>
       `;
@@ -189,9 +186,7 @@ function bindShellEvents(container) {
       } else {
         expandedGroups.add(key);
       }
-      const group = btn.closest(".app-nav-group");
-      group.classList.toggle("is-expanded");
-      btn.querySelector(".app-nav-item__chevron").textContent = group.classList.contains("is-expanded") ? "\u2212" : "+";
+      btn.closest(".app-nav-group").classList.toggle("is-expanded");
     });
   });
 

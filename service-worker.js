@@ -1,7 +1,7 @@
 /**
  * SERVICE WORKER - FOUNDATION (cache list tidak berubah, path sama)
  */
-const CACHE_NAME = "it-platform-shell-v7";
+const CACHE_NAME = "it-platform-shell-v8";
 
 const APP_SHELL_FILES = [
   "./index.html",
@@ -15,6 +15,7 @@ const APP_SHELL_FILES = [
   "./js/auth.js",
   "./js/ui.js",
   "./js/nav-config.js",
+  "./js/icons.js",
   "./js/shell.js",
   "./js/pages/login.js",
   "./js/pages/dashboard.js",

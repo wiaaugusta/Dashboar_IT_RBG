@@ -105,11 +105,28 @@ ol {
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
+  --radius-2xl: 26px;
 
-  /* Shadow ringan (docs/UI_AND_DESIGN.md #10) */
+  /* Shadow ringan (docs/UI_AND_DESIGN.md #10) - UPDATE: tambah shadow-xl
+     untuk elevasi kartu saat hover (moodboard "Nexus/Vektora" - kartu
+     terasa mengambang, bukan flat). */
   --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
   --shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
   --shadow-lg: 0 12px 32px rgba(17, 24, 39, 0.10);
+  --shadow-xl: 0 20px 45px rgba(30, 58, 138, 0.14);
+
+  /* Palet soft per-modul (dipakai icon background kartu dashboard,
+     mengikuti moodboard yang tiap KPI card warnanya beda-beda). */
+  --color-accent-blue-soft: #E8EDFB;
+  --color-accent-blue: #1E3A8A;
+  --color-accent-teal-soft: #DFF6F2;
+  --color-accent-teal: #0F766E;
+  --color-accent-amber-soft: #FEF3C7;
+  --color-accent-amber: #B45309;
+  --color-accent-purple-soft: #EDE9FE;
+  --color-accent-purple: #6D28D9;
+  --color-accent-rose-soft: #FCE7F3;
+  --color-accent-rose: #BE185D;
 
   /* Typography */
   --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -164,8 +181,8 @@ h1, h2, h3 {
   color: var(--color-text);
 }
 
-h1 { font-size: var(--font-size-h1); }
-h2 { font-size: var(--font-size-h2); }
+h1 { font-size: var(--font-size-h1); letter-spacing: -0.01em; }
+h2 { font-size: var(--font-size-h2); letter-spacing: -0.01em; }
 h3 { font-size: var(--font-size-h3); }
 
 small {

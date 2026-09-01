@@ -1,28 +1,22 @@
 /**
  * NAV-CONFIG.JS - STRUKTUR NAVIGASI (SUMBER TUNGGAL)
  * -------------------------------------------------------
- * Dipakai oleh shell.js (sidebar, drawer, bottom nav) dan app.js (routing).
+ * UPDATE (moodboard baru): tiap item nav sekarang punya "icon" (key dari
+ * js/icons.js) dipakai shell.js untuk sidebar & bottom nav, menggantikan
+ * label huruf ("H"/"C"/"L") supaya konsisten dengan referensi desain
+ * (icon line-style, bukan teks/emoji - docs/UI_AND_DESIGN.md #23).
  *
- * STAGE 2 UPDATE (docs/UI_AND_DESIGN.md #8):
- * Menu CCTV disembunyikan sementara untuk role IT_OFFICE
- * ("menu CCTV tidak ditampilkan sementara waktu" untuk Office/Admin -
- * pada implementasi saat ini ADMIN tetap butuh CCTV untuk administrasi
- * penuh, jadi yang direstriksi hanya IT_OFFICE, sesuai kebutuhan bisnis
- * modul CCTV yang memang punya data per-NIK IT Store).
- * Ini HANYA UI restriction - backend tetap wajib validasi authorization
- * (docs/PROJECT_CONSTITUTION.md #7, docs/UI_AND_DESIGN.md #27).
- *
- * BOTTOM_NAV_ITEMS: subset kurasi untuk mobile bottom nav
- * (docs/UI_AND_DESIGN.md #7 - "Home | CCTV | Project | More").
- * "more" bukan route sungguhan - dia membuka drawer sidebar penuh.
+ * Menu CCTV disembunyikan untuk role IT_OFFICE (docs/UI_AND_DESIGN.md #8).
+ * Ini HANYA UI restriction - backend tetap wajib validasi authorization.
  */
 
 export const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", path: "/dashboard", roles: null },
-  { key: "kpi", label: "KPI", path: "/kpi", roles: null },
+  { key: "dashboard", label: "Dashboard", path: "/dashboard", icon: "dashboard", roles: null },
+  { key: "kpi", label: "KPI", path: "/kpi", icon: "kpi", roles: null },
   {
     key: "aho",
     label: "AHO",
+    icon: "aho",
     roles: null,
     children: [
       { key: "aho-sla-store", label: "SLA AHO Store", path: "/aho/sla-aho-store", roles: null },
@@ -32,27 +26,29 @@ export const NAV_ITEMS = [
   {
     key: "kaspersky",
     label: "Kaspersky",
+    icon: "kaspersky",
     roles: null,
     children: [
       { key: "kaspersky-office", label: "Office", path: "/kaspersky/office", roles: null },
       { key: "kaspersky-store", label: "Store", path: "/kaspersky/store", roles: null }
     ]
   },
-  { key: "nms", label: "NMS", path: "/nms", roles: null },
+  { key: "nms", label: "NMS", path: "/nms", icon: "nms", roles: null },
   {
     key: "itam",
     label: "ITAM",
+    icon: "itam",
     roles: null,
     children: [
       { key: "itam-office", label: "Office", path: "/itam/office", roles: null },
       { key: "itam-store", label: "Store", path: "/itam/store", roles: null }
     ]
   },
-  // Office tidak melihat menu CCTV (docs/UI_AND_DESIGN.md #8).
-  { key: "cctv", label: "CCTV", path: "/cctv", roles: ["ADMIN", "IT_STORE"] },
+  { key: "cctv", label: "CCTV", path: "/cctv", icon: "cctv", roles: ["ADMIN", "IT_STORE"] },
   {
     key: "checklist",
     label: "Checklist",
+    icon: "checklist",
     roles: null,
     children: [
       { key: "checklist-office", label: "Office", path: "/checklist/office", roles: null },
@@ -63,28 +59,19 @@ export const NAV_ITEMS = [
 
 /** Kurasi menu untuk bottom navigation mobile. "more" = buka drawer. */
 export const BOTTOM_NAV_ITEMS = [
-  { key: "dashboard", label: "Home", path: "/dashboard", icon: "H", roles: null },
-  { key: "cctv", label: "CCTV", path: "/cctv", icon: "C", roles: ["ADMIN", "IT_STORE"] },
-  { key: "checklist-store", label: "Checklist", path: "/checklist/store", icon: "L", roles: null },
-  { key: "more", label: "More", action: "open-drawer", icon: "•••", roles: null }
+  { key: "dashboard", label: "Home", path: "/dashboard", icon: "home", roles: null },
+  { key: "cctv", label: "CCTV", path: "/cctv", icon: "cctv", roles: ["ADMIN", "IT_STORE"] },
+  { key: "checklist-store", label: "Checklist", path: "/checklist/store", icon: "checklist", roles: null },
+  { key: "more", label: "More", action: "open-drawer", icon: "more", roles: null }
 ];
 
-/**
- * @param {{roles: string[]|null}} item
- * @param {string} role
- */
 export function isVisibleForRole(item, role) {
   if (!item.roles) return true;
   return item.roles.indexOf(role) !== -1;
 }
 
-/**
- * Meratakan NAV_ITEMS menjadi daftar route yang punya "path".
- * @returns {{key: string, label: string, path: string, parentLabel: string|null}[]}
- */
 export function getFlatRoutes() {
   const flat = [];
-
   NAV_ITEMS.forEach((item) => {
     if (item.path) {
       flat.push({ key: item.key, label: item.label, path: item.path, parentLabel: null });
@@ -95,15 +82,9 @@ export function getFlatRoutes() {
       });
     }
   });
-
   return flat;
 }
 
-/**
- * Cari parent key dari sebuah leaf key (untuk auto-expand submenu aktif).
- * @param {string} leafKey
- * @returns {string|null}
- */
 export function findParentKey(leafKey) {
   for (const item of NAV_ITEMS) {
     if (item.children && item.children.some((child) => child.key === leafKey)) {

@@ -1,18 +1,23 @@
 /**
  * PAGES/LOGIN.JS - LOGIN PAGE
  * -------------------------------
- * Menampilkan halaman Login (split-screen desktop, single column mobile)
- * sesuai docs/UI_AND_DESIGN.md #43-45.
- *
- * PHASE 5 STATUS:
- * Setelah berhasil, diarahkan ke "/dashboard" (Application Shell asli).
- * Kalau user yang sudah login membuka /login lagi, langsung dialihkan
- * ke /dashboard (tidak perlu login ulang).
+ * UPDATE (moodboard baru - panel biru + badge icon + bullet fitur,
+ * mengikuti referensi "Spacer/Nexus" yang dikirim user): panel kiri
+ * sekarang punya badge icon monitor (bukan cuma teks "IT"), headline
+ * lebih besar, dan 3 bullet fitur singkat (statis, bukan data dummy -
+ * cuma deskripsi platform, aman dari docs/UI_AND_DESIGN.md #9 soal
+ * dummy data). Logic login TIDAK berubah sama sekali.
  */
-
 import { showError, showSuccess } from "../ui.js";
 import { login, isAuthenticated } from "../auth.js";
 import { navigate } from "../router.js";
+import { icon } from "../icons.js";
+
+const FEATURES = [
+  { icon: "dashboard", text: "Monitoring pekerjaan IT dalam satu dashboard" },
+  { icon: "cctv", text: "Kelola CCTV, akses berbasis role, aman & tercatat" },
+  { icon: "checklist", text: "Siap dipakai di desktop maupun mobile (PWA)" }
+];
 
 export function renderLoginPage(container) {
   if (isAuthenticated()) {
@@ -24,11 +29,19 @@ export function renderLoginPage(container) {
     <div class="login-layout">
       <section class="login-panel login-panel--brand" aria-hidden="true">
         <div class="login-brand">
-          <div class="login-brand__mark">IT</div>
+          <div class="login-brand__badge">${icon("monitor", { size: 34 })}</div>
           <h1 class="login-brand__title">IT Team Management &amp; Operations Platform</h1>
           <p class="login-brand__tagline">
             Satu platform untuk monitoring, KPI, project, dan operasional Team IT.
           </p>
+          <ul class="login-brand__features">
+            ${FEATURES.map((f) => `
+              <li class="login-brand__feature">
+                <span class="login-brand__feature-icon">${icon(f.icon, { size: 16 })}</span>
+                <span>${f.text}</span>
+              </li>
+            `).join("")}
+          </ul>
         </div>
       </section>
 
@@ -42,15 +55,8 @@ export function renderLoginPage(container) {
             <div class="form-group">
               <label class="form-label" for="nikInput">NIK</label>
               <div class="input-wrapper">
-                <input
-                  type="text"
-                  id="nikInput"
-                  name="nik"
-                  class="input"
-                  placeholder="Masukkan NIK"
-                  autocomplete="username"
-                  inputmode="numeric"
-                />
+                <input type="text" id="nikInput" name="nik" class="input"
+                  placeholder="Masukkan NIK" autocomplete="username" inputmode="numeric" />
               </div>
               <span class="form-error-text" id="nikError"></span>
             </div>
@@ -58,29 +64,14 @@ export function renderLoginPage(container) {
             <div class="form-group">
               <label class="form-label" for="passwordInput">Password</label>
               <div class="input-wrapper">
-                <input
-                  type="password"
-                  id="passwordInput"
-                  name="password"
-                  class="input"
-                  placeholder="Masukkan password"
-                  autocomplete="current-password"
-                />
-                <button
-                  type="button"
-                  class="password-toggle-btn"
-                  id="togglePasswordBtn"
-                  aria-label="Tampilkan password"
-                >
-                  Show
-                </button>
+                <input type="password" id="passwordInput" name="password" class="input"
+                  placeholder="Masukkan password" autocomplete="current-password" />
+                <button type="button" class="password-toggle-btn" id="togglePasswordBtn" aria-label="Tampilkan password">Show</button>
               </div>
               <span class="form-error-text" id="passwordError"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary login-submit-btn" id="loginSubmitBtn">
-              Login
-            </button>
+            <button type="submit" class="btn btn-primary login-submit-btn" id="loginSubmitBtn">Login</button>
           </form>
         </div>
       </section>
@@ -101,10 +92,7 @@ function bindLoginForm(container) {
     const isHidden = passwordInput.type === "password";
     passwordInput.type = isHidden ? "text" : "password";
     toggleBtn.textContent = isHidden ? "Hide" : "Show";
-    toggleBtn.setAttribute(
-      "aria-label",
-      isHidden ? "Sembunyikan password" : "Tampilkan password"
-    );
+    toggleBtn.setAttribute("aria-label", isHidden ? "Sembunyikan password" : "Tampilkan password");
   });
 
   form.addEventListener("submit", async (event) => {
@@ -113,11 +101,10 @@ function bindLoginForm(container) {
     const nik = nikInput.value.trim();
     const password = passwordInput.value;
 
-    const isValid = validateLoginForm(container, nik, password);
-    if (!isValid) return;
+    if (!validateLoginForm(container, nik, password)) return;
 
     submitBtn.disabled = true;
-    submitBtn.textContent = "Memproses...";
+    submitBtn.innerHTML = `<span class="btn-spinner"></span> Memproses...`;
 
     const result = await login(nik, password);
 
@@ -133,35 +120,14 @@ function bindLoginForm(container) {
   });
 }
 
-/**
- * Validasi ringan di frontend (feedback cepat untuk user).
- * Validasi WAJIB tetap dilakukan ulang di backend
- * (docs/PROJECT_CONSTITUTION.md #25 - frontend validation bukan security).
- */
 function validateLoginForm(container, nik, password) {
   const nikError = container.querySelector("#nikError");
   const passwordError = container.querySelector("#passwordError");
-
   let isValid = true;
 
-  if (!nik) {
-    nikError.textContent = "NIK wajib diisi.";
-    isValid = false;
-  } else {
-    nikError.textContent = "";
-  }
+  if (!nik) { nikError.textContent = "NIK wajib diisi."; isValid = false; } else { nikError.textContent = ""; }
+  if (!password) { passwordError.textContent = "Password wajib diisi."; isValid = false; } else { passwordError.textContent = ""; }
 
-  if (!password) {
-    passwordError.textContent = "Password wajib diisi.";
-    isValid = false;
-  } else {
-    passwordError.textContent = "";
-  }
-
-  if (!isValid) {
-    showError("Periksa kembali form login Anda.");
-  }
-
+  if (!isValid) showError("Periksa kembali form login Anda.");
   return isValid;
 }
-
