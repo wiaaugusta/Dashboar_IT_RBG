@@ -2,29 +2,26 @@
  * MODULES/CCTV.JS - HALAMAN CCTV
  * -----------------------------------
  * STAGE 2 UPDATE (docs/UI_AND_DESIGN.md #10-#19):
- * - Client-side pagination (PAGE_SIZE) + nomor urut mengikuti posisi
- *   pagination (tidak reset ke 1 tiap halaman) + total record selalu
- *   terlihat, sesuai #11. Catatan performa (#12): dataset di sini tetap
- *   diambil sekaligus dari getCCTV karena backend existing belum
- *   mendukung server-side pagination - pagination Stage 2 ini
- *   memperbaiki RENDERING (tidak melukis ratusan row sekaligus ke DOM),
- *   bukan menghilangkan biaya network. Server-side pagination sungguhan
- *   butuh perubahan API getCCTV (param page/limit) - itu perubahan
- *   backend yang harus didiskusikan terpisah (di luar file frontend ini).
+ * - SERVER-SIDE pagination + search (#10-#12): setiap ganti halaman/cari
+ *   mengirim request baru ke getCCTV dengan {page, limit, search}. Backend
+ *   yang memotong data (lihat Modules/CCTV.gs) - browser HANYA menerima &
+ *   merender maksimal PAGE_SIZE baris per request, bukan seluruh dataset.
+ *   Ini memperbaiki beban network untuk akun Admin (dataset besar), bukan
+ *   cuma rendering-nya. Response getCCTV sekarang berbentuk
+ *   { items, total, page, limit, totalPages } (bukan array polos lagi).
  * - Skeleton loading menggantikan teks "Memuat data..." polos (#13).
  * - URL suggestion popover dari 5 preset URL (#20).
  * - Generated password UX read-only + tombol "Gunakan" (#17-#19).
- *   Password digenerate oleh BACKEND lewat action baru
- *   "generateCctvPassword" (deterministic, HMAC + secret di server -
- *   frontend TIDAK menyimpan/menghitung secret apa pun, sesuai #17).
- *   Backend Apps Script perlu menambahkan action ini; belum ada di
- *   scope frontend ini karena file .gs tidak berada di repo frontend.
+ *   Password digenerate oleh BACKEND lewat action "generateCctvPassword"
+ *   (deterministic, HMAC + secret di server - frontend TIDAK menyimpan
+ *   atau menghitung secret apa pun).
  */
 
 import { renderShell } from "../shell.js";
 import { apiRequest } from "../api.js";
 import { getSession } from "../auth.js";
 import { showSuccess, showError } from "../ui.js";
+import { icon } from "../icons.js";
 
 const STATUS_OPTIONS = ["OK - DVR BARU", "OK - DVR LAMA"];
 const PAGE_SIZE = 10;
@@ -37,8 +34,9 @@ const URL_PRESETS = [
   "http://10.234.234.8:9090/"
 ];
 
-let cctvListCache = [];
+// State halaman aktif (server-side, bukan cache dataset penuh lagi).
 let currentPage = 1;
+let currentSearch = "";
 let searchDebounceTimer = null;
 
 export async function renderCctvPage(container) {
@@ -89,7 +87,8 @@ function bindCctvPage(contentEl, session) {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
       currentPage = 1;
-      renderCctvList(contentEl, filterCctvList(cctvListCache, searchInput.value));
+      currentSearch = searchInput.value;
+      loadCctvList(contentEl, session);
     }, 250);
   });
 
@@ -98,28 +97,23 @@ function bindCctvPage(contentEl, session) {
   contentEl.querySelector("#cctvModalOverlay").addEventListener("click", () => closeCctvModal(contentEl));
 }
 
+/**
+ * Server-side pagination (docs/UI_AND_DESIGN.md #10-#12): mengirim
+ * {page, limit, search} setiap kali, backend yang memotong data.
+ * Dipanggil ulang setiap ganti halaman/pencarian/refresh - BUKAN sekali
+ * di awal lalu difilter di browser.
+ */
 async function loadCctvList(contentEl, session) {
   const listArea = contentEl.querySelector("#cctvListArea");
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
   listArea.innerHTML = renderTableSkeleton();
   paginationArea.innerHTML = "";
 
-  const searchValue = contentEl
-  .querySelector("#cctvSearchInput")
-  .value
-  .trim();
-
-const result = await apiRequest(
-  "getCCTV",
-  {
-    page: currentPage,
-    limit: PAGE_SIZE,
-    search: searchValue
-  },
-  {
-    sessionToken: session.sessionToken
-  }
-);
+  const result = await apiRequest(
+    "getCCTV",
+    { page: currentPage, limit: PAGE_SIZE, search: currentSearch },
+    { sessionToken: session.sessionToken }
+  );
 
   if (!result.success) {
     listArea.innerHTML = `
@@ -134,36 +128,25 @@ const result = await apiRequest(
     return;
   }
 
-  const data = result.data || {};
-
-cctvListCache = Array.isArray(data.items) ? data.items : [];
-currentPage = Number(data.page) || 1;
-
-renderCctvList(contentEl, cctvListCache, {
-  total: Number(data.total) || 0,
-  page: Number(data.page) || 1,
-  limit: Number(data.limit) || PAGE_SIZE,
-  totalPages: Number(data.totalPages) || 1
-});
+  const payload = result.data || { items: [], total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1 };
+  currentPage = payload.page || 1; // backend bisa mengoreksi page kalau di luar rentang
+  renderCctvList(contentEl, session, payload);
 }
 
-
-/** Stage 2: render halaman aktif saja + pagination + total count global. */
-function renderCctvList(contentEl, items, meta) {
+/** Stage 2: render 1 halaman hasil dari server + pagination + total count global. */
+function renderCctvList(contentEl, session, payload) {
   const listArea = contentEl.querySelector("#cctvListArea");
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
   const countEl = contentEl.querySelector("#cctvCount");
 
-  const totalRecords = meta.total;
-  const page = meta.page;
-  const limit = meta.limit;
-  const totalPages = meta.totalPages;
+  const items = payload.items || [];
+  const totalRecords = payload.total || 0;
+  const totalPages = payload.totalPages || 1;
+  const page = payload.page || 1;
 
-  countEl.textContent = totalRecords > 0
-    ? `${totalRecords} toko`
-    : "";
+  countEl.textContent = totalRecords > 0 ? `${totalRecords} toko` : "";
 
-  if (!items.length) {
+  if (totalRecords === 0) {
     listArea.innerHTML = `
       <div class="state-card">
         <div class="state-card__icon state-card__icon--empty">-</div>
@@ -171,12 +154,11 @@ function renderCctvList(contentEl, items, meta) {
         <p class="state-card__subtitle">Coba ubah kata kunci pencarian.</p>
       </div>
     `;
-
     paginationArea.innerHTML = "";
     return;
   }
 
-  const startIndex = (page - 1) * limit;
+  const startIndex = (page - 1) * PAGE_SIZE;
 
   listArea.innerHTML = `
     <div class="cctv-table-wrapper">
@@ -194,9 +176,7 @@ function renderCctvList(contentEl, items, meta) {
           </tr>
         </thead>
         <tbody>
-          ${items.map((item, i) =>
-            renderCctvRow(item, startIndex + i + 1)
-          ).join("")}
+          ${items.map((item, i) => renderCctvRow(item, startIndex + i + 1)).join("")}
         </tbody>
       </table>
     </div>
@@ -204,22 +184,12 @@ function renderCctvList(contentEl, items, meta) {
 
   listArea.querySelectorAll("[data-edit-kdstore]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      openCctvModal(
-        contentEl,
-        btn.getAttribute("data-edit-kdstore")
-      );
+      openCctvModal(contentEl, btn.getAttribute("data-edit-kdstore"));
     });
   });
 
-  paginationArea.innerHTML = renderPagination(
-    page,
-    totalPages,
-    startIndex,
-    items.length,
-    totalRecords
-  );
-
-  bindPagination(contentEl, meta);
+  paginationArea.innerHTML = renderPagination(page, totalPages, startIndex, items.length, totalRecords);
+  bindPagination(contentEl, session, totalPages);
 }
 
 function renderPagination(page, totalPages, startIndex, pageCount, totalRecords) {
@@ -274,26 +244,19 @@ function getPageNumberList(page, totalPages) {
   return result;
 }
 
-function bindPagination(contentEl, meta) {
+/** Ganti halaman = request baru ke server (bukan slice array lokal lagi). */
+function bindPagination(contentEl, session, totalPages) {
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
-
   paginationArea.querySelectorAll("[data-page]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const value = btn.getAttribute("data-page");
 
-      if (value === "prev") {
-        currentPage = Math.max(1, meta.page - 1);
-      } else if (value === "next") {
-        currentPage = Math.min(meta.totalPages, meta.page + 1);
-      } else {
-        currentPage = parseInt(value, 10);
-      }
+      if (value === "prev") currentPage = Math.max(1, currentPage - 1);
+      else if (value === "next") currentPage = Math.min(totalPages, currentPage + 1);
+      else currentPage = parseInt(value, 10);
 
-      loadCctvList(contentEl, getSession());
-
-      contentEl
-        .querySelector("#cctvListArea")
-        .scrollIntoView({ block: "nearest" });
+      loadCctvList(contentEl, session);
+      contentEl.querySelector("#cctvListArea").scrollIntoView({ block: "nearest" });
     });
   });
 }
@@ -327,7 +290,7 @@ function renderCctvRow(item, rowNumber) {
       <td data-label="Status"><span class="badge badge-${statusClass}">${escapeHtml(item.status)}</span></td>
       <td data-label="URL">${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">Buka</a>` : "-"}</td>
       <td data-label="Terakhir Update" class="cctv-table__muted">${escapeHtml(item.updatedInfo || "-")}</td>
-      <td data-label=""><button type="button" class="btn btn-ghost" data-edit-kdstore="${escapeAttr(item.kdStore)}">Edit</button></td>
+      <td data-label=""><button type="button" class="btn btn-ghost btn-icon" aria-label="Edit ${escapeAttr(item.kdStore)}" data-edit-kdstore="${escapeAttr(item.kdStore)}">${icon("edit", { size: 16 })}</button></td>
     </tr>
   `;
 }
