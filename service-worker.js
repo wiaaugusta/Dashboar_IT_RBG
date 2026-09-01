@@ -1,7 +1,7 @@
 /**
  * SERVICE WORKER - FOUNDATION (cache list tidak berubah, path sama)
  */
-const CACHE_NAME = "it-platform-shell-v8";
+const CACHE_NAME = "it-platform-shell-v9";
 
 const APP_SHELL_FILES = [
   "./index.html",
