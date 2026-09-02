@@ -4680,3 +4680,340 @@ html, body {
   }
 
 }
+
+/* =========================================================
+   SIDEBAR - FINAL SMOOTH MOTION
+   ========================================================= */
+
+@media (min-width: 769px) {
+
+  /* -----------------------------------------
+     SIDEBAR
+     ----------------------------------------- */
+
+  .app-sidebar {
+
+    width: 76px !important;
+
+    transition:
+      width 480ms cubic-bezier(.22, 1, .36, 1),
+      box-shadow 480ms cubic-bezier(.22, 1, .36, 1);
+
+    will-change: width;
+
+    transform: translateZ(0);
+
+    backface-visibility: hidden;
+  }
+
+
+  .app-sidebar.is-expanded {
+
+    width: 252px !important;
+
+    box-shadow:
+      12px 0 40px
+      rgba(15, 23, 42, .10);
+  }
+
+
+  /* -----------------------------------------
+     MAIN CONTENT IKUT BERGERAK
+     ----------------------------------------- */
+
+  .app-shell__main {
+
+    margin-left: 76px !important;
+
+    transition:
+      margin-left 480ms cubic-bezier(.22, 1, .36, 1);
+
+    will-change: margin-left;
+
+    transform: translateZ(0);
+  }
+
+
+  .app-shell.sidebar-expanded
+  .app-shell__main {
+
+    margin-left: 252px !important;
+  }
+
+
+  /* -----------------------------------------
+     BRAND
+     ----------------------------------------- */
+
+  .app-sidebar__brand-text {
+
+    opacity: 0;
+
+    transform:
+      translate3d(-12px, 0, 0);
+
+    transition:
+      opacity 280ms ease,
+      transform 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-sidebar__brand-text {
+
+    opacity: 1;
+
+    transform:
+      translate3d(0, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     MENU LABEL
+     ----------------------------------------- */
+
+  .app-nav-item__label {
+
+    opacity: 0;
+
+    transform:
+      translate3d(-12px, 0, 0);
+
+    transition:
+      opacity 250ms ease,
+      transform 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-nav-item__label {
+
+    opacity: 1;
+
+    transform:
+      translate3d(0, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     CHEVRON
+     ----------------------------------------- */
+
+  .app-nav-item__chevron {
+
+    opacity: 0;
+
+    transform:
+      translate3d(-8px, 0, 0);
+
+    transition:
+      opacity 240ms ease,
+      transform 380ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-nav-item__chevron {
+
+    opacity: 1;
+
+    transform:
+      translate3d(0, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     USER
+     ----------------------------------------- */
+
+  .app-user__details {
+
+    opacity: 0;
+
+    transform:
+      translate3d(-10px, 0, 0);
+
+    transition:
+      opacity 260ms ease,
+      transform 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-user__details {
+
+    opacity: 1;
+
+    transform:
+      translate3d(0, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     LOGOUT
+     ----------------------------------------- */
+
+  .app-logout-btn {
+
+    transition:
+      width 420ms cubic-bezier(.22, 1, .36, 1),
+      padding 420ms cubic-bezier(.22, 1, .36, 1),
+      background-color 220ms ease,
+      color 220ms ease,
+      transform 280ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-logout-btn__label {
+
+    display: none;
+
+    opacity: 0;
+
+    transform:
+      translate3d(-8px, 0, 0);
+
+    transition:
+      opacity 220ms ease,
+      transform 350ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-logout-btn {
+
+    width: auto !important;
+
+    min-width: 40px !important;
+
+    padding:
+      0 10px !important;
+
+    gap: 7px;
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-logout-btn__label {
+
+    display: inline;
+
+    opacity: 1;
+
+    transform:
+      translate3d(0, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     ICON MOTION
+     ----------------------------------------- */
+
+  .app-nav-item__icon {
+
+    transition:
+      transform 360ms cubic-bezier(.22, 1, .36, 1),
+      color 220ms ease;
+  }
+
+
+  .app-nav-item:hover
+  .app-nav-item__icon {
+
+    transform:
+      scale(1.06);
+  }
+
+
+  /* -----------------------------------------
+     MENU HOVER
+     ----------------------------------------- */
+
+  .app-nav-item {
+
+    transition:
+      background-color 220ms ease,
+      color 220ms ease,
+      transform 360ms cubic-bezier(.22, 1, .36, 1),
+      box-shadow 220ms ease;
+  }
+
+
+  .app-nav-item:hover {
+
+    transform:
+      translate3d(3px, 0, 0);
+  }
+
+
+  /* -----------------------------------------
+     LOGO
+     ----------------------------------------- */
+
+  .app-sidebar__mark {
+
+    transition:
+      transform 420ms cubic-bezier(.22, 1, .36, 1),
+      box-shadow 420ms ease;
+  }
+
+
+  .app-sidebar.is-expanded
+  .app-sidebar__mark {
+
+    transform:
+      translate3d(0, -1px, 0)
+      scale(1.02);
+  }
+
+
+  /* -----------------------------------------
+     HILANGKAN KONTROL HOVER LAMA
+     ----------------------------------------- */
+
+  /*
+   * Karena sekarang JS yang menentukan state,
+   * hover lama tidak boleh membuka sidebar.
+   */
+
+  .app-sidebar:hover {
+
+    width: 76px !important;
+  }
+
+
+  .app-sidebar.is-expanded:hover {
+
+    width: 252px !important;
+  }
+
+
+  /* -----------------------------------------
+     SUBMENU
+     ----------------------------------------- */
+
+  .app-nav-submenu {
+
+    transition:
+      max-height 400ms cubic-bezier(.22, 1, .36, 1),
+      opacity 280ms ease;
+  }
+
+
+  /* -----------------------------------------
+     REDUCED MOTION
+     ----------------------------------------- */
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .app-sidebar,
+    .app-shell__main,
+    .app-sidebar *,
+    .app-nav-item {
+
+      transition: none !important;
+    }
+
+  }
+
+}

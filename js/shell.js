@@ -194,6 +194,48 @@ function bindShellEvents(container) {
   const hamburgerBtn = container.querySelector("#hamburgerBtn");
   const logoutBtn = container.querySelector("#logoutBtn");
   const bottomNav = container.querySelector("#appBottomNav");
+  
+    /* =====================================================
+     DESKTOP SIDEBAR MOTION
+     ===================================================== */
+
+  let sidebarCloseTimer = null;
+
+  if (sidebar) {
+
+    sidebar.addEventListener("mouseenter", () => {
+
+      if (window.innerWidth < 769) return;
+
+      clearTimeout(sidebarCloseTimer);
+
+      sidebar.classList.add("is-expanded");
+      sidebar.closest(".app-shell")?.classList.add("sidebar-expanded");
+
+    });
+
+
+    sidebar.addEventListener("mouseleave", () => {
+
+      if (window.innerWidth < 769) return;
+
+      /*
+       * Sedikit delay supaya ketika mouse bergerak
+       * melewati ujung sidebar tidak terasa berkedip.
+       */
+      clearTimeout(sidebarCloseTimer);
+
+      sidebarCloseTimer = setTimeout(() => {
+
+        sidebar.classList.remove("is-expanded");
+        sidebar.closest(".app-shell")
+          ?.classList.remove("sidebar-expanded");
+
+      }, 60);
+
+    });
+
+  }
 
   function openDrawer() {
     sidebar.classList.add("is-open");
