@@ -28,28 +28,67 @@ export function renderShell(container, options) {
   container.innerHTML = `
     <div class="app-shell">
       <aside class="app-sidebar" id="appSidebar">
-        <div class="app-sidebar__brand">
-          <div class="app-sidebar__mark">IT</div>
-          <span class="app-sidebar__brand-text">IT Platform</span>
-        </div>
 
-        <nav class="app-nav">
-          ${renderNavList(session.role, options.activeKey)}
-        </nav>
+          <div class="app-sidebar__brand">
+            <div class="app-sidebar__mark">IT</div>
 
-        <div class="app-sidebar__footer">
-          <div class="app-user">
-            <div class="app-user__avatar">${escapeHtml(getInitials(session.nik))}</div>
-            <div>
-              <div class="app-user__nik">${escapeHtml(session.nik)}</div>
-              <div class="app-user__role">${escapeHtml(session.role)}</div>
-            </div>
+            <span class="app-sidebar__brand-text">
+              IT Platform
+            </span>
           </div>
-          <button type="button" class="btn btn-ghost app-logout-btn" id="logoutBtn" aria-label="Logout">
-            ${icon("logout", { size: 18 })}
-          </button>
-        </div>
-      </aside>
+
+
+          <div class="app-sidebar__body">
+
+            <nav class="app-nav">
+              ${renderNavList(session.role, options.activeKey)}
+            </nav>
+
+          </div>
+
+
+          <div class="app-sidebar__footer">
+
+            <div class="app-user">
+
+              <div class="app-user__avatar">
+                ${escapeHtml(getInitials(session.nik))}
+              </div>
+
+              <div class="app-user__details">
+
+                <div class="app-user__nik">
+                  ${escapeHtml(session.nik)}
+                </div>
+
+                <div class="app-user__role">
+                  ${escapeHtml(session.role)}
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="app-logout-btn"
+              id="logoutBtn"
+              aria-label="Logout"
+              title="Keluar"
+            >
+
+              ${icon("logout", { size: 18 })}
+
+              <span class="app-logout-btn__label">
+                Keluar
+              </span>
+
+            </button>
+
+          </div>
+
+    </aside>
 
       <div class="app-shell__main">
         <header class="app-header">
@@ -190,9 +229,17 @@ function bindShellEvents(container) {
     });
   });
 
+  if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
-    await logout();
-    navigate("/login");
+
+    logoutBtn.disabled = true;
+
+    try {
+      await logout();
+    } finally {
+      navigate("/login");
+    }
+
   });
 }
 
