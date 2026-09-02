@@ -21,15 +21,34 @@ import { isAuthenticated } from "./auth.js";
 import { getFlatRoutes } from "./nav-config.js";
 
 function registerServiceWorker() {
+
   if (!("serviceWorker" in navigator)) return;
 
   window.addEventListener("load", () => {
+
     navigator.serviceWorker
-      .register("./service-worker.js")
+      .register("./service-worker.js?v=10")
+      .then((registration) => {
+
+        console.log(
+          "[app.js] Service worker aktif:",
+          registration.scope
+        );
+
+        registration.update();
+
+      })
       .catch((error) => {
-        console.error("[app.js] Service worker registration gagal:", error);
+
+        console.error(
+          "[app.js] Service worker registration gagal:",
+          error
+        );
+
       });
+
   });
+
 }
 
 /**

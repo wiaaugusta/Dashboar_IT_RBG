@@ -243,6 +243,8 @@ function bindShellEvents(container) {
   });
 }
 
+}
+
 function getInitials(text) {
   const clean = (text || "").toString().trim();
   return clean.substring(0, 2).toUpperCase();

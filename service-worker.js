@@ -1,14 +1,23 @@
 /**
- * SERVICE WORKER - FOUNDATION (cache list tidak berubah, path sama)
+ * SERVICE WORKER
+ * -------------------------------------------------------
+ * Development / active deployment strategy:
+ * Network First
+ *
+ * Browser akan mengambil file terbaru dari server terlebih dahulu.
+ * Cache hanya menjadi fallback jika network gagal.
  */
-const CACHE_NAME = "it-platform-shell-v9";
+
+const CACHE_NAME = "it-platform-shell-v10";
 
 const APP_SHELL_FILES = [
   "./index.html",
   "./manifest.json",
+
   "./css/style.css",
   "./css/layout.css",
   "./css/components.css",
+
   "./js/app.js",
   "./js/router.js",
   "./js/api.js",
@@ -17,35 +26,121 @@ const APP_SHELL_FILES = [
   "./js/nav-config.js",
   "./js/icons.js",
   "./js/shell.js",
+
   "./js/pages/login.js",
   "./js/pages/dashboard.js",
   "./js/pages/coming-soon.js",
+
   "./js/modules/cctv.js"
 ];
 
+
+/* =========================================================
+   INSTALL
+   ========================================================= */
+
 self.addEventListener("install", (event) => {
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL_FILES))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL_FILES))
+      .catch((error) => {
+        console.warn("[SW] Cache install gagal:", error);
+      })
   );
+
   self.skipWaiting();
 });
 
+
+/* =========================================================
+   ACTIVATE
+   ========================================================= */
+
 self.addEventListener("activate", (event) => {
+
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
+
+    caches.keys()
+      .then((keys) => {
+
+        return Promise.all(
+
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+
+        );
+
+      })
+      .then(() => self.clients.claim())
+
   );
-  self.clients.claim();
+
 });
 
+
+/* =========================================================
+   FETCH
+   ========================================================= */
+
 self.addEventListener("fetch", (event) => {
-  const isAppShellRequest = APP_SHELL_FILES.some((file) =>
-    event.request.url.endsWith(file.replace("./", "/"))
-  );
-  if (!isAppShellRequest) return;
+
+  const request = event.request;
+
+  if (request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  const isSameOrigin =
+    url.origin === self.location.origin;
+
+  if (!isSameOrigin) {
+    return;
+  }
+
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+
+    fetch(request)
+
+      .then((response) => {
+
+        /*
+         * Simpan response terbaru ke cache.
+         */
+
+        if (
+          response &&
+          response.status === 200 &&
+          response.type === "basic"
+        ) {
+
+          const responseClone = response.clone();
+
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(request, responseClone);
+            });
+
+        }
+
+        return response;
+
+      })
+
+      .catch(() => {
+
+        /*
+         * Network gagal → gunakan cache lama.
+         */
+
+        return caches.match(request);
+
+      })
+
   );
+
 });

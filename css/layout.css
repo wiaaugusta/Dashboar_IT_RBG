@@ -3614,3 +3614,119 @@ html, body {
   }
 
 }
+
+/* =========================================================
+   PREMIUM DESKTOP MOTION
+   ========================================================= */
+
+@media (min-width: 821px) {
+
+  .app-sidebar,
+  .app-sidebar *,
+  .app-nav-item,
+  .app-nav-item__label,
+  .app-nav-item__icon,
+  .app-nav-item__chevron,
+  .app-sidebar__brand-text,
+  .app-user__details,
+  .app-logout-btn,
+  .app-logout-btn__label {
+    transition-timing-function:
+      cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-sidebar {
+    transition:
+      width .42s cubic-bezier(.22, 1, .36, 1),
+      box-shadow .35s ease;
+  }
+
+
+  .app-sidebar__brand-text,
+  .app-nav-item__label,
+  .app-nav-item__chevron,
+  .app-user__details,
+  .app-logout-btn__label {
+
+    transition:
+      opacity .25s ease,
+      transform .32s cubic-bezier(.22, 1, .36, 1);
+  }
+
+
+  .app-nav-item {
+
+    transition:
+      background-color .22s ease,
+      color .22s ease,
+      transform .28s cubic-bezier(.22, 1, .36, 1),
+      box-shadow .22s ease;
+  }
+
+
+  .app-nav-item:hover {
+    transform: translateX(3px);
+  }
+
+
+  .app-nav-item__icon {
+
+    transition:
+      transform .28s cubic-bezier(.22, 1, .36, 1),
+      color .22s ease;
+  }
+
+
+  .app-nav-item:hover
+  .app-nav-item__icon {
+
+    transform: scale(1.06);
+  }
+
+
+  .app-sidebar__mark {
+
+    transition:
+      transform .35s cubic-bezier(.22, 1, .36, 1),
+      box-shadow .35s ease;
+  }
+
+
+  .app-sidebar:hover
+  .app-sidebar__mark {
+
+    transform: translateY(-1px);
+
+    box-shadow:
+      0 12px 26px
+      rgba(37, 99, 235, .28);
+  }
+
+
+  .app-logout-btn {
+
+    transition:
+      width .32s cubic-bezier(.22, 1, .36, 1),
+      background-color .22s ease,
+      color .22s ease,
+      transform .22s ease;
+  }
+
+
+  .app-logout-btn:hover {
+    transform: translateY(-1px);
+  }
+
+
+  /* submenu animation */
+
+  .app-nav-submenu {
+
+    transition:
+      max-height .35s cubic-bezier(.22, 1, .36, 1),
+      opacity .25s ease;
+
+  }
+
+}
