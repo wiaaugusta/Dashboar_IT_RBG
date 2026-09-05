@@ -343,7 +343,39 @@ export function renderDashboardPage(container) {
 
         </aside>
 
-      </section>  
+      </section>
+
+
+      <!-- ==========================================
+           USER INFO
+      =========================================== -->
+
+      <section class="dashboard-user-card">
+
+        <div class="dashboard-user-card__avatar">
+          ${escapeHtml(getInitials(session.nik))}
+        </div>
+
+        <div class="dashboard-user-card__info">
+
+          <span>LOGGED IN AS</span>
+
+          <strong>
+            ${escapeHtml(session.role)}
+          </strong>
+
+          <small>
+            NIK ${escapeHtml(session.nik)}
+          </small>
+
+        </div>
+
+        <div class="dashboard-user-card__secure">
+          ${icon("shield", { size: 16 })}
+          <span>Secure Session</span>
+        </div>
+
+      </section>
 
     </div>
   `;
@@ -421,6 +453,26 @@ function renderModuleCard(module) {
 /* =========================================================
    HELPERS
    ========================================================= */
+
+function getDisplayName(session) {
+
+  /*
+   * Session saat ini belum menyimpan nama user.
+   * Untuk sementara gunakan role.
+   *
+   * Ketika backend nanti mengembalikan name,
+   * otomatis akan menggunakan nama tersebut.
+   */
+
+  return session.name
+    ? session.name
+    : session.role === "IT_STORE"
+      ? "IT Store"
+      : session.role === "IT_OFFICE"
+        ? "IT Office"
+        : "Administrator";
+}
+
 
 function getInitials(text) {
 
