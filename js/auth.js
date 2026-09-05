@@ -60,20 +60,49 @@ export function getRole() {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export async function login(nik, password) {
-  const result = await apiRequest("login", { nik, password });
+
+  const result = await apiRequest(
+    "login",
+    {
+      nik,
+      password
+    }
+  );
+
+  // JANGAN membuat session jika login gagal
+  if (!result.success || !result.data) {
+    return {
+      success: false,
+      message:
+        result.message ||
+        "Login gagal. NIK atau password tidak valid."
+    };
+  }
 
   setSession({
-  nik: result.data.nik,
-  name:
-    result.data.name ||
-    result.data.nama ||
-    "",
-  role: result.data.role,
-  sessionToken: result.data.sessionToken,
-  loginAt: Date.now()
-});
+    nik:
+      result.data.nik || nik,
 
-  return { success: result.success, message: result.message };
+    name:
+      result.data.name ||
+      result.data.nama ||
+      "",
+
+    role:
+      result.data.role,
+
+    sessionToken:
+      result.data.sessionToken,
+
+    loginAt:
+      Date.now()
+  });
+
+  return {
+    success: true,
+    message:
+      result.message || "Login berhasil."
+  };
 }
 
 /**
