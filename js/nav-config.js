@@ -166,9 +166,9 @@ export const BOTTOM_NAV_ITEMS = [
 
   {
     key: "more",
-    label: "More",
-    action: "open-drawer",
-    icon: "more",
+    label: "Logout",
+    action: "logout",
+    icon: "logout",
     roles: null
   }
 ];

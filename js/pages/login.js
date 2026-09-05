@@ -390,7 +390,6 @@ function bindLoginForm(container) {
 
     document.activeElement?.blur();
     container.querySelector(".login-page")?.classList.add("is-loading");
-
     submitBtn.disabled = true;
 
     const originalContent =

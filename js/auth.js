@@ -204,6 +204,8 @@ export async function logout() {
   const session =
     getSession();
 
+  clearSession();
+
 
   if (session) {
 
@@ -228,7 +230,5 @@ export async function logout() {
 
   }
 
-
-  clearSession();
 
 }

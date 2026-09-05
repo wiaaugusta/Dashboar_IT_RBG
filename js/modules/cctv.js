@@ -2,9 +2,9 @@
  * MODULES/CCTV.JS - HALAMAN CCTV
  * -----------------------------------
  * STAGE 2 UPDATE (docs/UI_AND_DESIGN.md #10-#19):
- * - Data CCTV dimuat sekali dan disimpan di cache halaman agar pencarian
- *   dan pagination berlangsung cepat tanpa request setiap kali mengetik.
- *   Response getCCTV mendukung format { items, total, page, limit,
+ * - Data CCTV dimuat per halaman dari backend. Search tetap lintas seluruh
+ *   dataset karena filter dan pagination dilakukan server-side.
+ *   Response getCCTV berbentuk { items, total, page, limit,
  *   totalPages } maupun array polos.
  * - Skeleton loading menggantikan teks "Memuat data..." polos (#13).
  * - URL suggestion popover dari 5 preset URL (#20).
@@ -22,8 +22,6 @@ import { icon } from "../icons.js";
 
 const STATUS_OPTIONS = ["OK - DVR BARU", "OK - DVR LAMA"];
 const PAGE_SIZE = 10;
-const CCTV_CACHE_LIMIT = 10000;
-
 const URL_PRESETS = [
   "http://10.234.234.8/doc/page/login.asp",
   "http://10.234.234.8/",
@@ -36,7 +34,7 @@ const URL_PRESETS = [
 let currentPage = 1;
 let currentSearch = "";
 let cctvRequestId = 0;
-let cctvItemsCache = null;
+let cctvSearchTimer = null;
 
 export async function renderCctvPage(container) {
   const session = getSession();
@@ -44,7 +42,6 @@ export async function renderCctvPage(container) {
 
   currentPage = 1;
   currentSearch = "";
-  cctvItemsCache = null;
 
   const contentHtml = `
     <div class="page-header">
@@ -89,11 +86,11 @@ function bindCctvPage(contentEl, session) {
   searchInput.addEventListener("input", () => {
     currentPage = 1;
     currentSearch = searchInput.value.trim();
-    renderCachedCctvList(contentEl, session);
+    clearTimeout(cctvSearchTimer);
+    cctvSearchTimer = setTimeout(() => loadCctvList(contentEl, session), 180);
   });
 
   refreshBtn.addEventListener("click", () => {
-    cctvItemsCache = null;
     loadCctvList(contentEl, session);
   });
 
@@ -101,8 +98,8 @@ function bindCctvPage(contentEl, session) {
 }
 
 /**
- * Muat dataset sekali agar pencarian tidak mengulang request API setiap
- * kali user mengetik. Refresh tetap memuat ulang cache dari server.
+ * Muat satu halaman dari server. Backend menangani pencarian terhadap
+ * seluruh dataset, sehingga page 2+ tetap cepat tanpa payload besar.
  */
 async function loadCctvList(contentEl, session) {
   const listArea = contentEl.querySelector("#cctvListArea");
@@ -113,7 +110,7 @@ async function loadCctvList(contentEl, session) {
 
   const result = await apiRequest(
     "getCCTV",
-    { page: 1, limit: CCTV_CACHE_LIMIT, search: "" },
+    { page: currentPage, limit: PAGE_SIZE, search: currentSearch },
     { sessionToken: session.sessionToken }
   );
 
@@ -132,37 +129,7 @@ async function loadCctvList(contentEl, session) {
     return;
   }
 
-  cctvItemsCache = normalizeCctvItems(result.data);
-  renderCachedCctvList(contentEl, session);
-}
-
-function normalizeCctvItems(data) {
-  if (Array.isArray(data)) return data;
-  return data?.items || [];
-}
-
-function renderCachedCctvList(contentEl, session) {
-  const allItems = cctvItemsCache || [];
-  const search = currentSearch.toLowerCase();
-  const filteredItems = search
-    ? allItems.filter((item) => {
-        const storeCode = item.kdStore || item.store_id || "";
-        const storeName = item.namaStore || item.store_name || "";
-        return `${storeCode} ${storeName}`.toLowerCase().includes(search);
-      })
-    : allItems;
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
-  currentPage = Math.min(currentPage, totalPages);
-  const start = (currentPage - 1) * PAGE_SIZE;
-
-  renderCctvList(contentEl, session, {
-    items: filteredItems.slice(start, start + PAGE_SIZE),
-    total: filteredItems.length,
-    page: currentPage,
-    limit: PAGE_SIZE,
-    totalPages
-  });
+  renderCctvList(contentEl, session, result.data || {});
 }
 
 /** Stage 2: render 1 halaman hasil dari server + pagination + total count global. */
@@ -366,9 +333,13 @@ function renderCctvForm(contentEl, detail) {
   const modal = contentEl.querySelector("#cctvModal");
 
   modal.innerHTML = `
-    <div class="modal__header">
-      <h3>${escapeHtml(detail.namaStore)}</h3>
-      <span class="modal__subtitle">${escapeHtml(detail.kdStore)} - ${escapeHtml(detail.itArea)}</span>
+    <div class="modal__header cctv-edit-header">
+      <div>
+        <span class="modal__eyebrow">EDIT DATA TOKO</span>
+        <h3>${escapeHtml(detail.namaStore)}</h3>
+        <span class="modal__subtitle">${escapeHtml(detail.kdStore)} - ${escapeHtml(detail.itArea)}</span>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon" id="cctvHeaderCloseBtn" aria-label="Tutup edit">&times;</button>
     </div>
     <form id="cctvEditForm" class="modal__body">
       <div class="form-group">
@@ -402,6 +373,7 @@ function renderCctvForm(contentEl, detail) {
   `;
 
   bindUrlSuggestion(modal);
+  modal.querySelector("#cctvHeaderCloseBtn").addEventListener("click", () => closeCctvModal(contentEl));
 
   const statusInput = modal.querySelector("#cctvStatusInput");
   const credentialFieldsContainer = modal.querySelector("#cctvCredentialFields");

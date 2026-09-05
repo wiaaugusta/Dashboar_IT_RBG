@@ -176,6 +176,14 @@ function renderBottomNav(role, activeKey) {
           </button>
         `;
       }
+      if (item.action === "logout") {
+        return `
+          <button type="button" class="app-bottom-nav__item" data-bottom-nav-action="logout">
+            <span class="app-bottom-nav__icon">${icon(item.icon, { size: 20 })}</span>
+            <span>${escapeHtml(item.label)}</span>
+          </button>
+        `;
+      }
       return `
         <a href="#${item.path}" class="app-bottom-nav__item ${isActive ? "is-active" : ""}">
           <span class="app-bottom-nav__icon">${icon(item.icon, { size: 20 })}</span>
@@ -257,6 +265,8 @@ function bindShellEvents(container) {
   if (bottomNav) {
     const moreBtn = bottomNav.querySelector('[data-bottom-nav-action="open-drawer"]');
     if (moreBtn) moreBtn.addEventListener("click", openDrawer);
+    const bottomLogoutBtn = bottomNav.querySelector('[data-bottom-nav-action="logout"]');
+    if (bottomLogoutBtn) bottomLogoutBtn.addEventListener("click", () => performLogout(bottomLogoutBtn));
   }
 
   container.querySelectorAll("[data-group-toggle]").forEach((btn) => {
@@ -272,19 +282,16 @@ function bindShellEvents(container) {
   });
 
   if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
+    logoutBtn.addEventListener("click", () => performLogout(logoutBtn));
+  }
 
-    logoutBtn.disabled = true;
-
-    try {
-      await logout();
-    } finally {
-      navigate("/login");
-    }
-
-  });
 }
 
+async function performLogout(button) {
+  button.disabled = true;
+  const logoutRequest = logout();
+  navigate("/login");
+  await logoutRequest;
 }
 
 function getInitials(text) {
