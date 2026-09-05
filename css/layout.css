@@ -766,6 +766,11 @@ html, body {
 
 /* ---------- FORM ---------- */
 
+#loginForm {
+  width: min(100%, 340px);
+  margin-inline: auto;
+}
+
 .login-field-label {
   display: block;
 
@@ -836,6 +841,7 @@ html, body {
 
 
 .login-card .input-icon {
+  position: absolute;
   left: 16px;
 
   color: #94a3b8;

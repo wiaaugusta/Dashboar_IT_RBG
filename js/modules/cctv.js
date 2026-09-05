@@ -38,6 +38,7 @@ const URL_PRESETS = [
 let currentPage = 1;
 let currentSearch = "";
 let searchDebounceTimer = null;
+let cctvRequestId = 0;
 
 export async function renderCctvPage(container) {
   const session = getSession();
@@ -87,7 +88,7 @@ function bindCctvPage(contentEl, session) {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
       currentPage = 1;
-      currentSearch = searchInput.value;
+      currentSearch = searchInput.value.trim();
       loadCctvList(contentEl, session);
     }, 250);
   });
@@ -106,6 +107,7 @@ function bindCctvPage(contentEl, session) {
 async function loadCctvList(contentEl, session) {
   const listArea = contentEl.querySelector("#cctvListArea");
   const paginationArea = contentEl.querySelector("#cctvPaginationArea");
+  const requestId = ++cctvRequestId;
   listArea.innerHTML = renderTableSkeleton();
   paginationArea.innerHTML = "";
 
@@ -114,6 +116,8 @@ async function loadCctvList(contentEl, session) {
     { page: currentPage, limit: PAGE_SIZE, search: currentSearch },
     { sessionToken: session.sessionToken }
   );
+
+  if (requestId !== cctvRequestId) return;
 
   if (!result.success) {
     listArea.innerHTML = `
@@ -128,9 +132,32 @@ async function loadCctvList(contentEl, session) {
     return;
   }
 
-  const payload = result.data || { items: [], total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1 };
+  const payload = normalizeCctvPayload(result.data);
   currentPage = payload.page || 1; // backend bisa mengoreksi page kalau di luar rentang
   renderCctvList(contentEl, session, payload);
+}
+
+function normalizeCctvPayload(data) {
+  if (!Array.isArray(data)) {
+    return data || { items: [], total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1 };
+  }
+
+  const search = currentSearch.toLowerCase();
+  const items = search
+    ? data.filter((item) => {
+        const storeCode = item.kdStore || item.store_id || "";
+        const storeName = item.namaStore || item.store_name || "";
+        return `${storeCode} ${storeName}`.toLowerCase().includes(search);
+      })
+    : data;
+
+  return {
+    items,
+    total: items.length,
+    page: 1,
+    limit: items.length || PAGE_SIZE,
+    totalPages: 1
+  };
 }
 
 /** Stage 2: render 1 halaman hasil dari server + pagination + total count global. */
@@ -352,7 +379,7 @@ function renderCctvForm(contentEl, detail) {
         <label class="form-label" for="cctvUrlInput">URL CCTV</label>
         <div class="url-suggest-wrapper">
           <input type="text" id="cctvUrlInput" class="input" autocomplete="off"
-            value="${escapeAttr(detail.url || "")}" placeholder="Pilih atau ketik URL..." />
+            value="" placeholder="Pilih atau ketik URL..." />
           <div class="url-suggest-popover" id="cctvUrlPopover">
             ${URL_PRESETS.map((u) => `<button type="button" class="url-suggest-item" data-url-preset="${escapeAttr(u)}">${escapeHtml(u)}</button>`).join("")}
           </div>
