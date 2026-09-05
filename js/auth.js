@@ -62,14 +62,16 @@ export function getRole() {
 export async function login(nik, password) {
   const result = await apiRequest("login", { nik, password });
 
-  if (result.success && result.data) {
-    setSession({
-      nik: result.data.nik,
-      role: result.data.role,
-      sessionToken: result.data.sessionToken,
-      loginAt: Date.now()
-    });
-  }
+  setSession({
+  nik: result.data.nik,
+  name:
+    result.data.name ||
+    result.data.nama ||
+    "",
+  role: result.data.role,
+  sessionToken: result.data.sessionToken,
+  loginAt: Date.now()
+});
 
   return { success: result.success, message: result.message };
 }
