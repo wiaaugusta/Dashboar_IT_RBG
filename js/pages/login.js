@@ -388,6 +388,8 @@ function bindLoginForm(container) {
       return;
     }
 
+    document.activeElement?.blur();
+    container.querySelector(".login-page")?.classList.add("is-loading");
 
     submitBtn.disabled = true;
 
@@ -439,6 +441,7 @@ function bindLoginForm(container) {
 
     } finally {
 
+      container.querySelector(".login-page")?.classList.remove("is-loading");
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalContent;
 

@@ -74,6 +74,39 @@ html, body {
     #eef4fb;
 }
 
+.login-page.is-loading {
+  cursor: progress;
+}
+
+.login-page.is-loading::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(248, 250, 252, .62);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.login-page.is-loading::after {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 21;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 3px solid rgba(37, 99, 235, .2);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: loginLoadingSpin .7s linear infinite;
+}
+
+@keyframes loginLoadingSpin {
+  to { transform: rotate(360deg); }
+}
+
 
 /* ---------- MAIN SHELL ---------- */
 
@@ -1146,6 +1179,15 @@ html, body {
     box-shadow: none;
   }
 
+  .login-card__mobile-brand,
+  .login-card__header {
+    display: none;
+  }
+
+  .login-card {
+    padding-top: 24px;
+  }
+
 }
 
 
@@ -1204,7 +1246,7 @@ html, body {
 
 
   .login-card__mobile-brand {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 9px;
 
@@ -1614,6 +1656,43 @@ html, body {
 @media (min-width: 769px) {
   .app-bottom-nav {
     display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-sidebar,
+  .app-sidebar:hover {
+    width: min(286px, 86vw) !important;
+    z-index: calc(var(--z-drawer) + 1) !important;
+    overflow: hidden;
+  }
+
+  .app-sidebar__body {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .app-sidebar .app-sidebar__brand-text,
+  .app-sidebar .app-nav-item__label,
+  .app-sidebar .app-nav-item__chevron,
+  .app-sidebar .app-user__details,
+  .app-sidebar .app-logout-btn {
+    opacity: 1;
+    transform: none;
+  }
+
+  .app-sidebar .app-nav-item__chevron {
+    margin-right: 13px;
+  }
+
+  .app-sidebar .app-logout-btn {
+    width: auto;
+    min-width: 39px;
+    padding: 0 10px;
+  }
+
+  .app-sidebar .app-logout-btn__label {
+    display: inline;
   }
 }
 
