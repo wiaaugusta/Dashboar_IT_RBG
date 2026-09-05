@@ -96,8 +96,14 @@ export function renderShell(container, options) {
             <span></span><span></span><span></span>
           </button>
           <h1 class="app-header__title">${escapeHtml(options.pageTitle)}</h1>
-          <div class="app-header__user" title="${escapeHtml(session.nik)} - ${escapeHtml(session.role)}">
-            ${escapeHtml(getInitials(session.nik))}
+          <div class="app-header__profile" title="${escapeHtml(session.nik)} - ${escapeHtml(session.role)}">
+            <div class="app-header__user">
+              ${escapeHtml(getInitials(session.nik))}
+            </div>
+            <div class="app-header__profile-details">
+              <strong>${escapeHtml(session.name || session.nama || session.nik)}</strong>
+              <span>${escapeHtml(session.nik)}</span>
+            </div>
           </div>
         </header>
 

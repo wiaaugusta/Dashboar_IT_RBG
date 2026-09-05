@@ -171,7 +171,7 @@ function renderCctvList(contentEl, session, payload) {
             <th>Status</th>
             <th>URL</th>
             <th>Terakhir Update</th>
-            <th></th>
+            <th>Edit</th>
           </tr>
         </thead>
         <tbody>
@@ -289,7 +289,7 @@ function renderCctvRow(item, rowNumber) {
       <td data-label="Status"><span class="badge badge-${statusClass}">${escapeHtml(item.status)}</span></td>
       <td data-label="URL">${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">Buka</a>` : "-"}</td>
       <td data-label="Terakhir Update" class="cctv-table__muted">${escapeHtml(item.updatedInfo || "-")}</td>
-      <td data-label=""><button type="button" class="btn btn-ghost btn-icon" aria-label="Edit ${escapeAttr(item.kdStore)}" data-edit-kdstore="${escapeAttr(item.kdStore)}">${icon("edit", { size: 16 })}</button></td>
+      <td data-label="Edit"><button type="button" class="btn btn-ghost btn-sm cctv-edit-btn" aria-label="Edit ${escapeAttr(item.kdStore)}" data-edit-kdstore="${escapeAttr(item.kdStore)}">${icon("edit", { size: 15 })}<span>Edit</span></button></td>
     </tr>
   `;
 }
@@ -335,9 +335,9 @@ function renderCctvForm(contentEl, detail) {
   modal.innerHTML = `
     <div class="modal__header cctv-edit-header">
       <div>
-        <span class="modal__eyebrow">EDIT DATA TOKO</span>
-        <h3>${escapeHtml(detail.namaStore)}</h3>
-        <span class="modal__subtitle">${escapeHtml(detail.kdStore)} - ${escapeHtml(detail.itArea)}</span>
+        <span class="modal__eyebrow">${escapeHtml(detail.nik || "USER")}</span>
+        <h3>Edit</h3>
+        <span class="modal__subtitle">${escapeHtml(detail.kdStore)} - ${escapeHtml(detail.namaStore)}</span>
       </div>
       <button type="button" class="btn btn-ghost btn-icon" id="cctvHeaderCloseBtn" aria-label="Tutup edit">&times;</button>
     </div>
